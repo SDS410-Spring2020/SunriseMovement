@@ -1,0 +1,204 @@
+---
+title: "Exploratory Data Analysis"
+author: "Emma Livingston"
+date: "3/5/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(skimr)
+library(readxl)
+library(here)
+```
+
+```{r}
+sample_data <- read_csv(here("/data/iris.csv"))
+
+completes_matched <- matched %>%
+  filter(!is.na(voterbase_id))
+```
+
+```{r}
+#skim(matched)
+```
+
+
+```{r}
+matched %>%
+  select(contains("ts_")) %>%
+  skim()
+```
+
+
+
+```{r}
+
+matches %>%
+  filter(!is.na(voterbase_id)) %>%
+  ggplot(aes(x = score)) + 
+  geom_histogram()
+```
+
+
+```{r}
+ggplot(completes_matched, aes(x = vb_vf_g2018)) +
+  geom_bar()
+```
+
+```{r}
+completes_matched <- completes_matched %>%
+  mutate(vb_vf_p2010_voted = ifelse(is.na(vb_vf_p2010), 0, 1),
+  vb_vf_p2012_voted = ifelse(is.na(vb_vf_p2012), 0, 1),
+  vb_vf_p2014_voted = ifelse(is.na(vb_vf_p2014), 0, 1),
+  vb_vf_p2016_voted = ifelse(is.na(vb_vf_p2016), 0, 1),
+  vb_vf_p2018_voted = ifelse(is.na(vb_vf_p2018), 0, 1),
+  vb_vf_g2010_voted = ifelse(is.na(vb_vf_g2010), 0, 1),
+  vb_vf_g2012_voted = ifelse(is.na(vb_vf_g2012), 0, 1),
+  vb_vf_g2014_voted = ifelse(is.na(vb_vf_g2014), 0, 1),
+  vb_vf_g2016_voted = ifelse(is.na(vb_vf_g2016), 0, 1),
+  vb_vf_g2018_voted = ifelse(is.na(vb_vf_g2018), 0, 1))
+  
+```
+
+```{r}
+elections <- completes_matched %>%
+  select(contains("vb_vf_g20"), contains("vb_vf_p20")) %>%
+  select(contains("voted")) %>%
+  pivot_longer(cols = everything(), names_to = "election", values_to = "voted") %>%
+  group_by(election) %>%
+  summarize(voted = sum(voted))
+```
+
+
+```{r}
+ggplot(elections, aes(x = election, y = voted)) +
+  geom_point() +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+
+```{r}
+library(sf)
+library(tmap)
+us_shapefile <- st_read(dsn = "states_21basic")
+
+us <- tm_shape(us_shapefile) +
+  tm_polygons()
+us
+```
+
+
+```{r}
+completes_matched %>%
+  select(contains("gender"))
+
+#age variables:
+#vb_voterbase_age, vb_voterbase_age_bucket
+
+#race variable: race
+
+#gender variable: gender
+
+
+ggplot(data = completes_matched, aes(x = vb_voterbase_age_bucket, fill = gender)) +
+  geom_bar(position = "dodge") +
+  facet_wrap(~race)
+
+completes_matched %>%
+  group_by(vb_voterbase_age_bucket) %>%
+  tally()
+
+completes_matched %>%
+  group_by(race) %>%
+  tally() %>%
+  mutate(percent = n / nrow(completes_matched))
+```
+
+
+```{r}
+nrow(filter(completes_matched, race == "Caucasian", gender == "Female", vb_voterbase_age_bucket ==  "18-29"))/nrow(completes_matched)
+
+#this means that 35% of the people who pledged to vote were young white women
+```
+
+```{r}
+ggplot(data = 
+         filter(completes_matched, 
+                vb_voterbase_age_bucket == "18-29"), 
+       aes(x = vb_voterbase_age)) +
+  geom_bar(bins = 12) + 
+  facet_wrap(~race)
+```
+
+```{r}
+ggplot(data = 
+         filter(completes_matched, 
+                #vb_voterbase_age_bucket == "18-29",
+                race == "Caucasian"), 
+       aes(x = vb_voterbase_age, fill = gender)) +
+  geom_bar(bins = 12, position = "dodge")
+```
+
+```{r}
+completes_matched %>%
+  select(contains("state"), contains("city")) 
+
+#state variable: vb_tsmart_state
+#vb_vf_source_state is the state abbreviation indicating the state where the voter file was acquired
+#city variable: vb_tsmart_city
+
+
+completes_matched %>%
+  group_by(vb_tsmart_state) %>%
+  tally() %>%
+  arrange(desc(n)) %>%
+  ggplot(aes(x = vb_tsmart_state, y = n)) + 
+  geom_text(aes(label = vb_tsmart_state), size = 2) + 
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank()) +
+  labs(title = "Pledge-to-Vote count by State",
+       x = "State",
+       y = "Count")
+```
+
+Targeted states: Iowa, New Hampshire, Pennsylvania, Massachusetts
+
+```{r}
+ggplot(data = filter(completes_matched, vb_tsmart_state == "IA"), aes(x = vb_voterbase_age_bucket, fill = gender)) +
+  geom_bar(position = "dodge") +
+  facet_wrap(~race) +
+  labs(title = "Iowa")
+
+ggplot(data = filter(completes_matched, vb_tsmart_state == "NH"), aes(x = vb_voterbase_age_bucket, fill = gender)) +
+  geom_bar(position = "dodge") +
+  facet_wrap(~race) +
+  labs(title = "New Hampshire")
+
+ggplot(data = filter(completes_matched, vb_tsmart_state == "PA"), aes(x = vb_voterbase_age_bucket, fill = gender)) +
+  geom_bar(position = "dodge") +
+  facet_wrap(~race) +
+  labs(title = "Pennsylvania")
+
+ggplot(data = filter(completes_matched, vb_tsmart_state == "MA"), aes(x = vb_voterbase_age_bucket, fill = gender)) +
+  geom_bar(position = "dodge") +
+  facet_wrap(~race) +
+  labs(title = "Massachusetts")
+```
+
+
+```{r vf_vote_history_codes}
+#A	 Voter cast an absentee ballot
+#B	 Absentee/Mail-In, non-SOS, Applied via Voter Recognition
+#E	 Voter cast an early vote ballot
+#F	 Early, non-SOS, Applied via Voter Recognition
+#M	 Voter cast a ballot by mail
+#P	 Voter cast a ballot at the polls
+#Q	 Voter cast a provisional/questionable ballot
+#R	 Poll, non-SOS, Applied via Voter Recognition
+#S	 Questioned/Provisional, non-SOS, Applied via Voter Recognition
+#Y	 Individual voted in the election
+#Z	 Voted, no vote method available, non-SOS, Applied via Voter Recognition
+```
+
