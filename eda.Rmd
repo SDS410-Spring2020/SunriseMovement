@@ -11,44 +11,48 @@ library(tidyverse)
 library(skimr)
 library(readxl)
 library(here)
+library(janitor)
+library(viridis)
 ```
 
-```{r}
-sample_data <- read_csv(here("/data/iris.csv"))
+```{r read_data}
+#Read in Target Smart Data Dictionary
+ts_data_dict <- read_csv(here("/data/targetsmart_datadictionary.csv"), skip = 2) %>%
+  clean_names()
 
-completes_matched <- matched %>%
-  filter(!is.na(voterbase_id))
+#Read in de-duplicated Matched file
+unique_matched <- read_csv(here("/data/Smith_Capstone_Voters_Unique.csv"))
 ```
 
-```{r}
-#skim(matched)
-```
-
-
-```{r}
-matched %>%
-  select(contains("ts_")) %>%
-  skim()
+```{r skim_matched}
+#skim(unique_matched)
 ```
 
 
+# Elections 
 
-```{r}
-
-matches %>%
-  filter(!is.na(voterbase_id)) %>%
-  ggplot(aes(x = score)) + 
-  geom_histogram()
-```
-
-
-```{r}
-ggplot(completes_matched, aes(x = vb_vf_g2018)) +
+```{r voting_mechanisms}
+ggplot(unique_matched, aes(x = vb_vf_g2018)) +
   geom_bar()
 ```
 
+
+```{r vf_vote_history_codes}
+#A	 Voter cast an absentee ballot
+#B	 Absentee/Mail-In, non-SOS, Applied via Voter Recognition
+#E	 Voter cast an early vote ballot
+#F	 Early, non-SOS, Applied via Voter Recognition
+#M	 Voter cast a ballot by mail
+#P	 Voter cast a ballot at the polls
+#Q	 Voter cast a provisional/questionable ballot
+#R	 Poll, non-SOS, Applied via Voter Recognition
+#S	 Questioned/Provisional, non-SOS, Applied via Voter Recognition
+#Y	 Individual voted in the election
+#Z	 Voted, no vote method available, non-SOS, Applied via Voter Recognition
+```
+
 ```{r}
-completes_matched <- completes_matched %>%
+unique_matched2 <- unique_matched %>%
   mutate(vb_vf_p2010_voted = ifelse(is.na(vb_vf_p2010), 0, 1),
   vb_vf_p2012_voted = ifelse(is.na(vb_vf_p2012), 0, 1),
   vb_vf_p2014_voted = ifelse(is.na(vb_vf_p2014), 0, 1),
@@ -63,12 +67,16 @@ completes_matched <- completes_matched %>%
 ```
 
 ```{r}
-elections <- completes_matched %>%
+elections <- unique_matched2 %>%
   select(contains("vb_vf_g20"), contains("vb_vf_p20")) %>%
   select(contains("voted")) %>%
   pivot_longer(cols = everything(), names_to = "election", values_to = "voted") %>%
   group_by(election) %>%
-  summarize(voted = sum(voted))
+  summarize(voted = sum(voted)) %>%
+  arrange(desc(voted))
+
+perc_voted_g2018 <- elections$voted[1]/nrow(unique_matched)
+perc_voted_g2018
 ```
 
 
@@ -78,17 +86,19 @@ ggplot(elections, aes(x = election, y = voted)) +
   theme(axis.text.x = element_text(angle = 90))
 ```
 
+# Mapping 
 
 ```{r}
 library(sf)
 library(tmap)
-us_shapefile <- st_read(dsn = "states_21basic")
+us_shapefile <- st_read(dsn = here("data/states_21basic"))
 
 us <- tm_shape(us_shapefile) +
   tm_polygons()
 us
 ```
 
+# Demographic Breakdown
 
 ```{r}
 completes_matched %>%
@@ -98,22 +108,25 @@ completes_matched %>%
 #vb_voterbase_age, vb_voterbase_age_bucket
 
 #race variable: race
+#4/8 try vb_voterbase_race
 
 #gender variable: gender
 
 
-ggplot(data = completes_matched, aes(x = vb_voterbase_age_bucket, fill = gender)) +
+ggplot(data = unique_matched, aes(x = vb_voterbase_age_bucket, fill = gender)) +
   geom_bar(position = "dodge") +
   facet_wrap(~race)
 
-completes_matched %>%
+unique_matched %>%
   group_by(vb_voterbase_age_bucket) %>%
   tally()
 
-completes_matched %>%
-  group_by(race) %>%
+unique_matched %>%
+  filter(vb_tsmart_state %in% c("IA", "NH", "PA", "MA")) %>%
+  group_by(vb_tsmart_state, race) %>%
   tally() %>%
-  mutate(percent = n / nrow(completes_matched))
+  mutate(percent = n / nrow(completes_matched)) %>%
+  arrange(vb_tsmart_state, desc(n))
 ```
 
 
@@ -145,7 +158,7 @@ ggplot(data =
 completes_matched %>%
   select(contains("state"), contains("city")) 
 
-#state variable: vb_tsmart_state
+#state variable: vb_tsmart_state: use this one, this is where they are living
 #vb_vf_source_state is the state abbreviation indicating the state where the voter file was acquired
 #city variable: vb_tsmart_city
 
@@ -165,40 +178,58 @@ completes_matched %>%
 
 Targeted states: Iowa, New Hampshire, Pennsylvania, Massachusetts
 
+## Demographic breakdown by state
+
 ```{r}
 ggplot(data = filter(completes_matched, vb_tsmart_state == "IA"), aes(x = vb_voterbase_age_bucket, fill = gender)) +
   geom_bar(position = "dodge") +
+  scale_fill_viridis_d() +
+  theme(axis.text.x = element_text(angle = 90)) + 
   facet_wrap(~race) +
-  labs(title = "Iowa")
+  labs(title = "Iowa", x = "Age Group", y = "Count")
 
 ggplot(data = filter(completes_matched, vb_tsmart_state == "NH"), aes(x = vb_voterbase_age_bucket, fill = gender)) +
   geom_bar(position = "dodge") +
+  scale_fill_viridis_d() +
+  theme(axis.text.x = element_text(angle = 90)) + 
   facet_wrap(~race) +
-  labs(title = "New Hampshire")
+  labs(title = "New Hampshire", x = "Age Group", y = "Count")
 
 ggplot(data = filter(completes_matched, vb_tsmart_state == "PA"), aes(x = vb_voterbase_age_bucket, fill = gender)) +
   geom_bar(position = "dodge") +
+  scale_fill_viridis_d() +
+  theme(axis.text.x = element_text(angle = 90)) + 
   facet_wrap(~race) +
-  labs(title = "Pennsylvania")
+  labs(title = "Pennsylvania", x = "Age Group", y = "Count")
 
 ggplot(data = filter(completes_matched, vb_tsmart_state == "MA"), aes(x = vb_voterbase_age_bucket, fill = gender)) +
   geom_bar(position = "dodge") +
+  scale_fill_viridis_d() +
+  theme(axis.text.x = element_text(angle = 90)) + 
   facet_wrap(~race) +
-  labs(title = "Massachusetts")
+  labs(title = "Massachusetts", x = "Age Group", y = "Count")
 ```
 
 
-```{r vf_vote_history_codes}
-#A	 Voter cast an absentee ballot
-#B	 Absentee/Mail-In, non-SOS, Applied via Voter Recognition
-#E	 Voter cast an early vote ballot
-#F	 Early, non-SOS, Applied via Voter Recognition
-#M	 Voter cast a ballot by mail
-#P	 Voter cast a ballot at the polls
-#Q	 Voter cast a provisional/questionable ballot
-#R	 Poll, non-SOS, Applied via Voter Recognition
-#S	 Questioned/Provisional, non-SOS, Applied via Voter Recognition
-#Y	 Individual voted in the election
-#Z	 Voted, no vote method available, non-SOS, Applied via Voter Recognition
-```
 
+
+
+Notes on next steps from 4/8 mtg:
+
+hypothesis test between sample and population means - looking at if race was representative of the population
+try to connect this back to field work research - come up with some recommendations
+
+look for everyaction variables
+
+a lot of the field work was done at college campuses
+
+we could pull information about what campus they were recruited from in civis, it should be an activist code
+
+also pull in class & education
+
+try to look at zipcode level data
+
+
+what is hte problem you're working on
+visualizations
+what are our conclusions - what does this mean for organizing
