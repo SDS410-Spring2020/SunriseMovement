@@ -89,13 +89,13 @@ ggplot(elections, aes(x = election, y = voted)) +
 # Mapping 
 
 ```{r}
-library(sf)
-library(tmap)
-us_shapefile <- st_read(dsn = here("data/states_21basic"))
-
-us <- tm_shape(us_shapefile) +
-  tm_polygons()
-us
+# library(sf)
+# library(tmap)
+# us_shapefile <- st_read(dsn = here("data/states_21basic"))
+# 
+# us <- tm_shape(us_shapefile) +
+#   tm_polygons()
+# us
 ```
 
 # Demographic Breakdown
