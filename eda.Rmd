@@ -101,7 +101,7 @@ ggplot(elections, aes(x = election, y = voted)) +
 # Demographic Breakdown
 
 ```{r}
-completes_matched %>%
+unique_matched %>%
   select(contains("gender"))
 
 #age variables:
@@ -125,20 +125,20 @@ unique_matched %>%
   filter(vb_tsmart_state %in% c("IA", "NH", "PA", "MA")) %>%
   group_by(vb_tsmart_state, race) %>%
   tally() %>%
-  mutate(percent = n / nrow(completes_matched)) %>%
+  mutate(percent = n / nrow(unique_matched)) %>%
   arrange(vb_tsmart_state, desc(n))
 ```
 
 
 ```{r}
-nrow(filter(completes_matched, race == "Caucasian", gender == "Female", vb_voterbase_age_bucket ==  "18-29"))/nrow(completes_matched)
+nrow(filter(unique_matched, race == "Caucasian", gender == "Female", vb_voterbase_age_bucket ==  "18-29"))/nrow(unique_matched)
 
 #this means that 35% of the people who pledged to vote were young white women
 ```
 
 ```{r}
 ggplot(data = 
-         filter(completes_matched, 
+         filter(unique_matched, 
                 vb_voterbase_age_bucket == "18-29"), 
        aes(x = vb_voterbase_age)) +
   geom_bar(bins = 12) + 
@@ -147,7 +147,7 @@ ggplot(data =
 
 ```{r}
 ggplot(data = 
-         filter(completes_matched, 
+         filter(unique_matched, 
                 #vb_voterbase_age_bucket == "18-29",
                 race == "Caucasian"), 
        aes(x = vb_voterbase_age, fill = gender)) +
@@ -155,15 +155,19 @@ ggplot(data =
 ```
 
 ```{r}
-completes_matched %>%
+unique_matched %>%
   select(contains("state"), contains("city")) 
 
 #state variable: vb_tsmart_state: use this one, this is where they are living
 #vb_vf_source_state is the state abbreviation indicating the state where the voter file was acquired
 #city variable: vb_tsmart_city
 
+unique_matched %>%
+  group_by(vb_tsmart_state) %>%
+  tally() %>%
+  arrange(desc(n))
 
-completes_matched %>%
+unique_matched %>%
   group_by(vb_tsmart_state) %>%
   tally() %>%
   arrange(desc(n)) %>%
@@ -180,38 +184,33 @@ Targeted states: Iowa, New Hampshire, Pennsylvania, Massachusetts
 
 ## Demographic breakdown by state
 
-```{r}
-ggplot(data = filter(completes_matched, vb_tsmart_state == "IA"), aes(x = vb_voterbase_age_bucket, fill = gender)) +
-  geom_bar(position = "dodge") +
-  scale_fill_viridis_d() +
-  theme(axis.text.x = element_text(angle = 90)) + 
-  facet_wrap(~race) +
-  labs(title = "Iowa", x = "Age Group", y = "Count")
 
-ggplot(data = filter(completes_matched, vb_tsmart_state == "NH"), aes(x = vb_voterbase_age_bucket, fill = gender)) +
+```{r base_plot_function}
+base_plot <- function(data, title, scales = "fixed"){ 
+  data %>%
+ggplot(aes(x = vb_voterbase_age_bucket, fill = gender)) +
   geom_bar(position = "dodge") +
   scale_fill_viridis_d() +
   theme(axis.text.x = element_text(angle = 90)) + 
-  facet_wrap(~race) +
-  labs(title = "New Hampshire", x = "Age Group", y = "Count")
+  facet_wrap(~race, scales = scales) +
+  labs(title = title, x = "Age Group", y = "Count", fill = "Gender")
+}
 
-ggplot(data = filter(completes_matched, vb_tsmart_state == "PA"), aes(x = vb_voterbase_age_bucket, fill = gender)) +
-  geom_bar(position = "dodge") +
-  scale_fill_viridis_d() +
-  theme(axis.text.x = element_text(angle = 90)) + 
-  facet_wrap(~race) +
-  labs(title = "Pennsylvania", x = "Age Group", y = "Count")
-
-ggplot(data = filter(completes_matched, vb_tsmart_state == "MA"), aes(x = vb_voterbase_age_bucket, fill = gender)) +
-  geom_bar(position = "dodge") +
-  scale_fill_viridis_d() +
-  theme(axis.text.x = element_text(angle = 90)) + 
-  facet_wrap(~race) +
-  labs(title = "Massachusetts", x = "Age Group", y = "Count")
 ```
 
+```{r demographic_state}
+#Iowa
+base_plot(data = filter(unique_matched, vb_tsmart_state == "IA"), title = "Iowa")
 
+#New Hampshire
+base_plot(data = filter(unique_matched, vb_tsmart_state == "NH"), title = "New Hampshire")
 
+#Pennsylvania
+base_plot(data = filter(unique_matched, vb_tsmart_state == "PA"), title = "Pennsylvania")
+
+#M
+base_plot(data = filter(unique_matched, vb_tsmart_state == "MA"), title = "Massachusetts")
+```
 
 
 Notes on next steps from 4/8 mtg:
@@ -233,3 +232,33 @@ try to look at zipcode level data
 what is hte problem you're working on
 visualizations
 what are our conclusions - what does this mean for organizing
+
+
+# Zipcode breakdown
+
+```{r}
+unique_matched %>%
+  filter(vb_tsmart_state %in% c("IA", "NH", "PA", "MA")) %>%
+  group_by(vb_tsmart_zip) %>%
+  tally() %>%
+  inner_join(unique_matched, by = "vb_tsmart_zip") %>%
+  select(vb_tsmart_state, vb_tsmart_zip, n) %>%
+  arrange(vb_tsmart_state, desc(n)) %>%
+  unique() %>% 
+  View()
+```
+
+```{r urbanicity}
+unique_matched %>% 
+  group_by(urbanicity) %>% 
+  tally() %>% 
+  View()
+```
+
+```{r}
+unique_matched %>% 
+  group_by(vb_vf_national_precinct_code) %>% 
+  tally() %>% 
+  arrange(desc(n))
+```
+

@@ -1,0 +1,29 @@
+---
+title: "College Campuses"
+author: "Emma Livingston"
+date: "4/25/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(here)
+```
+
+```{r}
+college_campuses <- read_csv(here("/data/Smith_Capstone_College_Campus.csv"))
+
+unique_matched <- read_csv(here("/data/Smith_Capstone_Voters_Unique.csv"))
+```
+
+```{r}
+matched_w_campuses <- unique_matched %>%
+  left_join(college_campuses, by = "vanid")
+
+matched_w_campuses %>% 
+  select(vanid) %>%
+  unique() %>%
+  nrow()
+```
+
