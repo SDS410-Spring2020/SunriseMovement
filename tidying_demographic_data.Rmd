@@ -1,0 +1,40 @@
+---
+title: "Demographic data"
+author: "Alina Barylsky"
+date: "3/5/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#load packages
+library(tidyverse)
+library(readr)
+
+#upload dataset
+dem_data <- read_csv("QuickFacts Apr-12-2020.csv")
+```
+
+```{r}
+#remove unneeded columns
+dem_data$"Fact Note" <- NULL 
+dem_data <- select(dem_data, -contains("Value Note for"))
+
+#remove unneeded rows
+dem_data <- dem_data[-c(66:86),] 
+```
+
+```{r}
+#tidy format
+dem_data <- dem_data %>% 
+  pivot_longer(c("Massachusetts", "Iowa", "Pennsylvania", "New Hampshire"), names_to = "state", values_to = "cases")
+
+dem_data <- dem_data %>% 
+    pivot_wider(names_from = "Fact", values_from = cases)
+
+#write to csv
+dem_data %>% 
+  write_csv(path = "data/demographic_data.csv")
+```
+
