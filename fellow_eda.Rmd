@@ -1,0 +1,77 @@
+---
+title: "fellow_eda"
+author: "Sophia Foster"
+date: "4/26/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(skimr)
+library(readxl)
+library(here)
+```
+
+```{r}
+fellow_stats_read <- read.csv(here("/data/fellow_demographics.csv"))
+```
+
+```{r}
+fellow_stats <- fellow_stats_read %>%
+  mutate(Class = fct_relevel(Class, c("In Poverty / Poor", "Working Class / Lower Middle Class", "Middle Class", "Middle Class, Upper Class / Owning Class", "Prefer to Self Describe")))
+
+fellow_stats$Sex <- recode(fellow_stats$Sex, "Woman, Non-Binary, Transgender" = "Woman, NB, Transgender")
+fellow_stats$Class <- recode(fellow_stats$Class, "Working Class / Lower Middle Class" = "Working / Lower Middle")
+fellow_stats$Class <- recode(fellow_stats$Class, "Middle Class, Upper Class / Owning Class" = "Middle, Upper/Owning")
+```
+
+```{r}
+#bar graphs of each demographic factor
+ggplot(fellow_stats, aes(x = Sex)) +
+  geom_bar()+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+ggplot(fellow_stats, aes(x = Race)) +
+  geom_bar()+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+ggplot(fellow_stats, aes(x = Class)) +
+  geom_bar()+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+```
+
+```{r}
+#by race, color sex and class
+ggplot(fellow_stats, aes(x = Race, fill=Sex)) +
+  geom_bar()+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+ggplot(fellow_stats, aes(x = Race, fill=Class)) +
+  geom_bar()+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+```
+
+```{r}
+#by sex, color race and class
+ggplot(fellow_stats, aes(x = Sex, fill=Race)) +
+  geom_bar()+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+ggplot(fellow_stats, aes(x = Sex, fill=Class)) +
+  geom_bar()+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+```
+
+```{r}
+#by class, color race and sex
+ggplot(fellow_stats, aes(x = Class, fill=Race)) +
+  geom_bar()+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+ggplot(fellow_stats, aes(x = Class, fill=Sex)) +
+  geom_bar()+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+```
+
