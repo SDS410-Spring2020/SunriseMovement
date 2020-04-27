@@ -15,11 +15,13 @@ library(here)
 college_campuses <- read_csv(here("/data/Smith_Capstone_College_Campus.csv"))
 
 unique_matched <- read_csv(here("/data/Smith_Capstone_Voters_Unique.csv"))
+
+college_demographics <- read_csv(here("/data/college_demographics.csv"))
 ```
 
 ```{r}
 matched_w_campuses <- unique_matched %>%
-  left_join(college_campuses, by = "vanid")
+  left_join(select(college_campuses, vanid, activistcodeid, activistcodename), by = "vanid")
 
 matched_w_campuses %>% 
   select(vanid) %>%
