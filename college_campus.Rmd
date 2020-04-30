@@ -17,6 +17,9 @@ college_campuses <- read_csv(here("/data/Smith_Capstone_College_Campus.csv"))
 unique_matched <- read_csv(here("/data/Smith_Capstone_Voters_Unique.csv"))
 
 college_demographics <- read_csv(here("/data/college_demographics.csv"))
+
+additional_vars <- read_csv(here("/data/Smith_Capstone_Additional_Voter_File_Vars.csv"))
+
 ```
 
 ```{r}
@@ -28,3 +31,10 @@ matched_w_campuses %>%
   unique() %>%
   nrow()
 ```
+
+
+```{r}
+full_data <- matched_w_campuses %>%
+  left_join(additional_vars, by = c("vanid" = "van_id"))
+```
+
