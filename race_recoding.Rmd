@@ -35,5 +35,17 @@ college_dems_recat <- college_dems %>%
   # remove uncoded columns
   select(-c(two_or_more_races, nonresident_alien, native_hawaiian_or_other_pac_islander, american_indian_or_alaska_native, unknown_race))
 
+#sum(college_dems_recat$other, na.rm = TRUE)
+
+summary(college_dems_recat)
+```
+
+```{r}
+addtl_var <- read_csv(here("/data/Smith_Capstone_Additional_Voter_File_Vars.csv"))
+
+unique(addtl_var$vb_voterbase_race)
+
+just_race <- addtl_var %>%
+  select(race, vb_voterbase_race)
 ```
 
