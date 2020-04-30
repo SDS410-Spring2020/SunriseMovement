@@ -1,0 +1,51 @@
+---
+title: "race_demographics"
+author: "Alina Barylsky"
+date: "4/27/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+```
+
+```{r}
+#Read in de-duplicated Matched file
+unique_matched <- read_csv(here("/data/Smith_Capstone_Voters_Unique.csv"))
+
+#Read in college demographics file
+college_dems <- read_csv(here("/data/college_demographics.csv"))
+
+#convert to numeric
+college_dems$two_or_more_races <- as.numeric(college_dems$two_or_more_races)
+college_dems$native_hawaiian_or_other_pac_islander <- as.numeric(college_dems$native_hawaiian_or_other_pac_islander)
+college_dems$unknown_race <- as.numeric(college_dems$unknown_race)
+
+#Recoding race columns
+college_dems_recat <- college_dems %>%
+  # nonresident alien to uncoded
+  mutate(uncoded = college_dems$nonresident_alien + college_dems$unknown_race,
+         # two or more to other
+         other = college_dems$two_or_more_races + college_dems$native_hawaiian_or_other_pac_islander,
+         # American indian or Alaska Native to Native American
+         native_american = college_dems$american_indian_or_alaska_native
+         ) %>%
+  # remove uncoded columns
+  select(-c(two_or_more_races, nonresident_alien, native_hawaiian_or_other_pac_islander, american_indian_or_alaska_native, unknown_race))
+
+#sum(college_dems_recat$other, na.rm = TRUE)
+
+summary(college_dems_recat)
+```
+
+```{r}
+addtl_var <- read_csv(here("/data/Smith_Capstone_Additional_Voter_File_Vars.csv"))
+
+unique(addtl_var$vb_voterbase_race)
+
+just_race <- addtl_var %>%
+  select(race, vb_voterbase_race)
+```
+
