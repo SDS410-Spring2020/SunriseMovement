@@ -45,10 +45,11 @@ codes_to_keep <- c("Thomas Jefferson Uni", "Saint Anselm College", "Communty Col
 ```{r}
 full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Caucasian" = "White")
 full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Uncoded" = "Unknown")
-full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Other" = "Unknown")
+full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Other" = "POC")
 full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "African-American" = "POC")
 full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Asian" = "POC")
 full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Hispanic" = "POC")
+full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Native American" = "POC")
 
 clean_data <- full_data %>% 
   select(van_id, statecode.x, activistcodeid.x, activistcodeid.y, activistcodename.y, vb_voterbase_race)%>%
