@@ -7,7 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(readr)
+library(tidyverse)
 library(here)
 ```
 
@@ -36,5 +36,39 @@ matched_w_campuses %>%
 ```{r}
 full_data <- matched_w_campuses %>%
   left_join(additional_vars, by = c("vanid" = "van_id"))
+```
+
+```{r}
+codes_to_keep <- c("Thomas Jefferson Uni", "Saint Anselm College", "Communty College Phl", "UniOfNorthernIowa", "Grand View Universit", "Dartmouth College", "Drake University", "Keene State College", "Simpson College", "Antioch University", "Great Bay CommColleg", "Manchester CommColle", "Plymouth State Unive", "New England College", "NHTI","OLDCommunty College", "White Mountains ComC", "Franklin Pierce Univ", "Granite State Colleg", "University of Iowa", "Grinnell University", "OLD Grinnel", "UniofNHampshireManch", "Temple", "River Valley CommCol", "Drexel University", "Southern New Hampshi", "Uni of New Hampshire", "Uni of Pennsylvania", "Iowa StateUniversity", "Central College", "Colby-Sawyer College", "UniScienceinPhilly", "La Salle", "DesMoinesCommCollege", "Rivier University")
+```
+
+```{r}
+full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Caucasian" = "White")
+full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Uncoded" = "Unknown")
+full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Other" = "Unknown")
+full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "African-American" = "POC")
+full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Asian" = "POC")
+full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Hispanic" = "POC")
+
+clean_data <- full_data %>% 
+  select(van_id, statecode.x, activistcodeid.x, activistcodeid.y, activistcodename.y, vb_voterbase_race)%>%
+  filter(activistcodename.y %in% codes_to_keep)%>%
+  drop_na(vb_voterbase_race)
+
+counts <- clean_data %>%
+  group_by(activistcodename.y, vb_voterbase_race)%>%
+  count(vb_voterbase_race)
+
+View(counts)
+```
+
+```{r}
+clean_college_dems <- college_demographics %>%
+  select(activistcodename, nonresident_alien,	unknown_race,	two_or_more_races,	white,	native_hawaiian_or_other_pac_islander,	hispanic,	black_or_african_american,	asian,	american_indian_or_alaska_native)%>%
+  mutate(unknown = nonresident_alien + unknown_race + two_or_more_races) %>% 
+  mutate(POC = native_hawaiian_or_other_pac_islander + hispanic + black_or_african_american + asian + american_indian_or_alaska_native)%>%
+  select(activistcodename, white, unknown, POC)
+
+View(clean_college_dems)
 ```
 

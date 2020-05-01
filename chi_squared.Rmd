@@ -10,8 +10,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
-school1 <- c(81, 9, 10)
-res <- chisq.test(school1, p = c(.7, .2, .1))
+Dartmoth <- c(336, 42, 86)
+res <- chisq.test(school1, p = c(.50, .17, .33))
 res
 ```
 
