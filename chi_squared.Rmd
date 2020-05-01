@@ -10,8 +10,113 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
-Dartmoth <- c(336, 42, 86)
-res <- chisq.test(school1, p = c(.50, .17, .33))
+#too low
+Colby_Sawyer <- c(0,	1,	0)
+res <- chisq.test(Colby_Sawyer, p = c(0.11,	0.78,	0.11))
 res
 ```
 
+```{r}
+#can't reject null
+Communty_College_Phl <- c(69,	22,	11)
+res <- chisq.test(Communty_College_Phl, p = c(0.68,	0.23,	0.09))
+res
+```
+
+```{r}
+#reject null
+Dartmouth_College <- c(86, 336, 42)
+res <- chisq.test(Dartmouth_College, p = c(.33, .50, .17))
+res
+```
+
+```{r}
+#reject null
+Drexel_University <- c(38,	80,	7)
+res <- chisq.test(Drexel_University, p = c(0.29,	0.53,	0.18))
+res
+```
+
+```{r}
+#can't reject null
+Grand_View_Universit <- c(4,	28,	4)
+res <- chisq.test(Grand_View_Universit, p = c(0.16,	0.65,	0.19))
+res
+```
+
+```{r}
+#too low
+Great_Bay_CommColleg <- c(0,	9,	1)
+res <- chisq.test(Great_Bay_CommColleg, p = c(0.07,	0.78,	0.15))
+res
+```
+
+```{r}
+#reject null
+Grinnell_University <- c(7,	81,	6)
+res <- chisq.test(Grinnell_University, p = c(0.20,	0.50,	0.30))
+res
+```
+
+```{r}
+#reject null
+Iowa_StateUniversity <- c(34,	665,	66)
+res <- chisq.test(Iowa_StateUniversity, p = c(0.12,	0.71,	0.17))
+res
+```
+
+```{r}
+#reject null
+New_England_College <- c(26,	72,	3)
+res <- chisq.test(New_England_College, p = c(0.26,	0.45,	0.29))
+res
+```
+
+```{r}
+#too low
+NHTI <- c(3,	37,	2)
+res <- chisq.test(NHTI, p = c(0.11,	0.78,	0.11))
+res
+```
+
+```{r}
+#reject null
+Plymouth_State_Unive <- c(10,	336, 7)
+res <- chisq.test(Plymouth_State_Unive, p = c(0.07,	0.81,	0.12))
+res
+```
+
+```{r}
+#reject null
+Saint_Anselm_College <- c(8,	205,	1)
+res <- chisq.test(Saint_Anselm_College, p = c(0.07,	0.87,	0.06))
+res
+```
+
+```{r}
+#too low
+Simpson_College <- c(0,	3,	1)
+res <- chisq.test(Simpson_College, p = c(0.10,	0.81,	0.09))
+res
+```
+
+```{r}
+#can't reject null
+Thomas_Jefferson_Uni <- c(9,	27,	5)
+res <- chisq.test(Thomas_Jefferson_Uni, p = c(0.31,	0.55,	0.14))
+res
+```
+
+```{r}
+#reject null
+Uni_of_New_Hampshire <- c(23,	616,	22)
+res <- chisq.test(Uni_of_New_Hampshire, p = c(0.07,	0.81,	0.12))
+res
+```
+
+```{r}
+#reject null
+UniofNHampshireManch <- c(1,	57,	0)
+res <- chisq.test(UniofNHampshireManch, p = c(0.14,	0.69,	0.17))
+res
+```

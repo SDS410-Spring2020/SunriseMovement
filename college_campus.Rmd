@@ -45,10 +45,12 @@ full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "African-Amer
 full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Asian" = "POC_Count")
 full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Hispanic" = "POC_Count")
 full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Native American" = "POC_Count")
+
 clean_data <- full_data %>% 
   select(van_id, statecode.x, activistcodeid.x, activistcodeid.y, activistcodename.y, vb_voterbase_race)%>%
   filter(activistcodename.y %in% codes_to_keep)%>%
-  drop_na(vb_voterbase_race)
+  mutate(vb_voterbase_race = replace_na(vb_voterbase_race, "Unknown"))
+
 counts <- clean_data %>%
   mutate(activistcodename = activistcodename.y) %>%
   group_by(activistcodename, vb_voterbase_race)%>%
