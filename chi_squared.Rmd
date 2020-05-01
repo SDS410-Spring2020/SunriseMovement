@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 Dartmoth <- c(336, 42, 86)
-res <- chisq.test(school1, p = c(.50, .17, .33))
+res <- chisq.test(Dartmoth, p = c(.50, .17, .33))
 res
 ```
 
