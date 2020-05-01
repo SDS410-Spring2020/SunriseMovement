@@ -79,8 +79,21 @@ counts_and_expected <- counts %>%
   mutate(Prop_POC_Expected = (POC/100))%>%
   mutate(Prop_White_Expected = (white/100))%>%
   mutate(Prop_Unknown_Expected = (unknown/100))%>%
-  select(activistcodename, POC_Count, White_Count, Unknown_Count, Prop_POC_Expected, Prop_White_Expected, Prop_Unknown_Expected)
+  select(activistcodename, POC_Count, White_Count, Unknown_Count, Prop_POC_Expected, Prop_White_Expected, Prop_Unknown_Expected)%>%
+  mutate(sum_prop = (Prop_POC_Expected + Prop_White_Expected + Prop_Unknown_Expected))%>% #fix this
+  filter(sum_prop == 1) #fix this
 
 View(counts_and_expected)
+```
+
+```{r}
+for (i in counts_and_expected) {
+  counts <- c(counts_and_expected$POC_Count, counts_and_expected$White_Count, counts_and_expected$Unknown_Count)
+  p <- c(counts_and_expected$Prop_POC_Expected, counts_and_expected$Prop_White_Expected, counts_and_expected$Prop_Unknown_Expected)
+res <- chisq.test(counts, p)
+print(res)
+}
+
+#problem because some expected values are too low
 ```
 
