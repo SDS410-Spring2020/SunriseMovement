@@ -45,10 +45,11 @@ codes_to_keep <- c("Thomas Jefferson Uni", "Saint Anselm College", "Communty Col
 ```{r}
 full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Caucasian" = "White")
 full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Uncoded" = "Unknown")
-full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Other" = "Unknown")
+full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Other" = "POC")
 full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "African-American" = "POC")
 full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Asian" = "POC")
 full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Hispanic" = "POC")
+full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Native American" = "POC")
 
 clean_data <- full_data %>% 
   select(van_id, statecode.x, activistcodeid.x, activistcodeid.y, activistcodename.y, vb_voterbase_race)%>%
@@ -70,5 +71,60 @@ clean_college_dems <- college_demographics %>%
   select(activistcodename, white, unknown, POC)
 
 View(clean_college_dems)
+```
+
+```{r}
+full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Caucasian" = "White_Count")
+full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Uncoded" = "Unknown_Count")
+full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Other" = "Unknown_Count")
+full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "African-American" = "POC_Count")
+full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Asian" = "POC_Count")
+full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Hispanic" = "POC_Count")
+full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Native American" = "POC_Count")
+
+clean_data <- full_data %>% 
+  select(van_id, statecode.x, activistcodeid.x, activistcodeid.y, activistcodename.y, vb_voterbase_race)%>%
+  filter(activistcodename.y %in% codes_to_keep)%>%
+  drop_na(vb_voterbase_race)
+
+counts <- clean_data %>%
+  mutate(activistcodename = activistcodename.y) %>%
+  group_by(activistcodename, vb_voterbase_race)%>%
+  count(vb_voterbase_race)%>%
+  spread(vb_voterbase_race, n)
+```
+
+```{r}
+clean_college_dems <- college_demographics %>%
+  select(activistcodename, nonresident_alien,	unknown_race,	two_or_more_races,	white,	native_hawaiian_or_other_pac_islander,	hispanic,	black_or_african_american,	asian,	american_indian_or_alaska_native)%>%
+  mutate(unknown = nonresident_alien + unknown_race + two_or_more_races) %>% 
+  mutate(POC = native_hawaiian_or_other_pac_islander + hispanic + black_or_african_american + asian + american_indian_or_alaska_native)%>%
+  select(activistcodename, white, unknown, POC)
+```
+
+```{r}
+counts_and_expected <- counts %>%
+  inner_join(clean_college_dems, by = "activistcodename")%>%
+  mutate(POC_Count = replace_na(POC_Count, 0))%>%
+  mutate(Unknown_Count = replace_na(Unknown_Count, 0))%>%
+  mutate(Prop_POC_Expected = (POC/100))%>%
+  mutate(Prop_White_Expected = (white/100))%>%
+  mutate(Prop_Unknown_Expected = (unknown/100))%>%
+  select(activistcodename, POC_Count, White_Count, Unknown_Count, Prop_POC_Expected, Prop_White_Expected, Prop_Unknown_Expected)%>%
+  mutate(sum_prop = (Prop_POC_Expected + Prop_White_Expected + Prop_Unknown_Expected))%>% #fix this
+  filter(sum_prop == 1) #fix this
+
+View(counts_and_expected)
+```
+
+```{r}
+for (i in counts_and_expected) {
+  counts <- c(counts_and_expected$POC_Count, counts_and_expected$White_Count, counts_and_expected$Unknown_Count)
+  p <- c(counts_and_expected$Prop_POC_Expected, counts_and_expected$Prop_White_Expected, counts_and_expected$Prop_Unknown_Expected)
+res <- chisq.test(counts, p)
+print(res)
+}
+
+#problem because some expected values are too low
 ```
 
