@@ -95,7 +95,20 @@ Pledge to Vote sample variables: Counts
 
 ```{r}
 test_data <- test_data %>%
-  mutate(wo_unk_POC_Count = POC_Count / (POC_Count + White_Count))
+  mutate(wo_unk_POC_Count = POC_Count / (POC_Count + White_Count),
+         wo_unk_White_Count = White_Count / (POC_Count + White_Count),
+         wo_unk_Prop_POC_Expected = Prop_POC_Expected / (Prop_POC_Expected + Prop_White_Expected), 
+         wo_unk_Prop_White_Expected = Prop_White_Expected / (Prop_POC_Expected + Prop_White_Expected)
+         )
+
+
+#Check to make sure everything adds to 1
+test_data %>%
+  mutate(counts_total = wo_unk_POC_Count + wo_unk_White_Count,
+         expected_total = wo_unk_Prop_POC_Expected + wo_unk_Prop_White_Expected) %>%
+  select(counts_total, expected_total) %>%
+  filter(counts_total != 1) %>%
+  filter(expected_total != 1)
 ```
 
 
