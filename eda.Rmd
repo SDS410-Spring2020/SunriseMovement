@@ -24,8 +24,10 @@ ts_data_dict <- read_csv(here("/data/targetsmart_datadictionary.csv"), skip = 2)
 unique_matched <- read_csv(here("/data/Smith_Capstone_Voters_Unique.csv"))
 ```
 
-```{r skim_matched}
-#skim(unique_matched)
+
+```{r}
+pledge_to_vote <- unique_matched %>%
+  left_join(select(additional_vars,van_id, vb_voterbase_race, tb_income_range_cd, tb_income_range_prem_cd), by = c("vanid" = "van_id")) 
 ```
 
 
@@ -138,11 +140,11 @@ nrow(filter(unique_matched, race == "Caucasian", gender == "Female", vb_voterbas
 
 ```{r}
 ggplot(data = 
-         filter(unique_matched, 
+         filter(pledge_to_vote, 
                 vb_voterbase_age_bucket == "18-29"), 
        aes(x = vb_voterbase_age)) +
   geom_bar(bins = 12) + 
-  facet_wrap(~race)
+  facet_wrap(~vb_voterbase_race)
 ```
 
 ```{r}
@@ -192,7 +194,7 @@ ggplot(aes(x = vb_voterbase_age_bucket, fill = gender)) +
   geom_bar(position = "dodge") +
   scale_fill_viridis_d() +
   theme(axis.text.x = element_text(angle = 90)) + 
-  facet_wrap(~race, scales = scales) +
+  facet_wrap(~vb_voterbase_race, scales = scales) +
   labs(title = title, x = "Age Group", y = "Count", fill = "Gender")
 }
 
@@ -200,16 +202,16 @@ ggplot(aes(x = vb_voterbase_age_bucket, fill = gender)) +
 
 ```{r demographic_state}
 #Iowa
-base_plot(data = filter(unique_matched, vb_tsmart_state == "IA"), title = "Iowa")
+base_plot(data = filter(pledge_to_vote, vb_tsmart_state == "IA"), title = "Iowa")
 
 #New Hampshire
-base_plot(data = filter(unique_matched, vb_tsmart_state == "NH"), title = "New Hampshire")
+base_plot(data = filter(pledge_to_vote, vb_tsmart_state == "NH"), title = "New Hampshire")
 
 #Pennsylvania
-base_plot(data = filter(unique_matched, vb_tsmart_state == "PA"), title = "Pennsylvania")
+base_plot(data = filter(pledge_to_vote, vb_tsmart_state == "PA"), title = "Pennsylvania")
 
 #M
-base_plot(data = filter(unique_matched, vb_tsmart_state == "MA"), title = "Massachusetts")
+base_plot(data = filter(pledge_to_vote, vb_tsmart_state == "MA"), title = "Massachusetts")
 ```
 
 
