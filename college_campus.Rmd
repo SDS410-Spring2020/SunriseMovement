@@ -9,6 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(here)
+library(broom)
 ```
 
 ```{r}
@@ -75,8 +76,8 @@ counts_and_expected <- counts %>%
   mutate(Prop_White_Expected = (white/100))%>%
   mutate(Prop_Unknown_Expected = (unknown/100))%>%
   select(activistcodename, POC_Count, White_Count, Unknown_Count, Prop_POC_Expected, Prop_White_Expected, Prop_Unknown_Expected)%>%
-  mutate(sum_prop = (Prop_POC_Expected + Prop_White_Expected + Prop_Unknown_Expected))%>% #fix this
-  filter(sum_prop == 1) #fix this
+  mutate(sum_prop = (Prop_POC_Expected + Prop_White_Expected + Prop_Unknown_Expected)) #%>% #fix this
+  #filter(sum_prop == 1) #fix this
 View(counts_and_expected)
 ```
 
@@ -89,3 +90,22 @@ print(res)
 }
 #problem because some expected values are too low
 ```
+
+```{r}
+#need a dataset with state and college_type?
+test_data <- counts_and_expected %>%
+  inner_join(college_demographics, by = "activistcodename")
+  
+#see how many of each college type each state has
+test_data %>%
+  group_by(state, college_type) %>%
+  count()
+
+#this doesnt work yet
+#test chi_squared
+test_data %>%
+  filter(sum_prop == 1) %>%
+  group_by(state, college_type) %>%
+  do(tidy(chisq.test(c(.$POC_Count, .$White_Count, .$Unknown_Count), p = c(.$Prop_POC_Expected, .$Prop_White_Expected, .$Prop_Unknown_Expected))))
+```
+
