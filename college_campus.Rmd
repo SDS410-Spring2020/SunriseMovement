@@ -48,7 +48,7 @@ full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Hispanic" = 
 full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Native American" = "POC_Count")
 
 clean_data <- full_data %>% 
-  select(van_id, statecode.x, activistcodeid.x, activistcodeid.y, activistcodename.y, vb_voterbase_race)%>%
+  select(van_id, state.x, activistcodeid.x, activistcodeid.y, activistcodename.y, vb_voterbase_race)%>%
   filter(activistcodename.y %in% codes_to_keep)%>%
   mutate(vb_voterbase_race = replace_na(vb_voterbase_race, "Unknown"))
 
