@@ -60,6 +60,7 @@ counts <- clean_data %>%
 ```
 
 ```{r}
+# Expected proportions for each college
 clean_college_dems <- college_demographics %>%
   select(activistcodename, nonresident_alien,	unknown_race,	two_or_more_races,	white,	native_hawaiian_or_other_pac_islander,	hispanic,	black_or_african_american,	asian,	american_indian_or_alaska_native)%>%
   mutate(unknown = nonresident_alien + unknown_race + two_or_more_races) %>% 
@@ -106,7 +107,7 @@ options(scipen = 999)
 
 #test chi_squared
 results <- test_data %>%
-  filter(sum_prop == 1) %>%
+  #filter(sum_prop == 1) %>%
   do(tidy(chisq.test(c(.$POC_Count, .$White_Count, .$Unknown_Count), p = c(.$Prop_POC_Expected, .$Prop_White_Expected, .$Prop_Unknown_Expected))))
 View(results)
 
@@ -117,7 +118,7 @@ college_info <- test_data %>%
 #View all chi squared tests
 results <- results %>%
   inner_join(college_info, by = "activistcodename") %>%
-  group_by(state, college_type)
+  select(-c(parameter, method))
 View(results)
 ```
 
