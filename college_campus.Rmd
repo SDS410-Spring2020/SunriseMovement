@@ -44,12 +44,11 @@ full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Hispanic" = 
 full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Native American" = "POC_Count")
 
 clean_data <- full_data %>% 
-  select(van_id, state.x, activistcodeid.x, activistcodeid.y, activistcodename.y, vb_voterbase_race)%>%
-  filter(activistcodename.y %in% codes_to_keep)%>%
-  mutate(vb_voterbase_race = replace_na(vb_voterbase_race, "Unknown"))
+  select(van_id, activistcodeid, activistcodename, vb_voterbase_race)%>%
+  filter(activistcodename %in% codes_to_keep)%>%
+  mutate(vb_voterbase_race = replace_na(vb_voterbase_race, "Unknown_Count"))
 
 counts <- clean_data %>%
-  mutate(activistcodename = activistcodename.y) %>%
   group_by(activistcodename, vb_voterbase_race)%>%
   count(vb_voterbase_race)%>%
   spread(vb_voterbase_race, n)
@@ -79,17 +78,17 @@ View(counts_and_expected)
 ```
 
 ```{r}
-for (i in counts_and_expected) {
-  counts <- c(counts_and_expected$POC_Count, counts_and_expected$White_Count, counts_and_expected$Unknown_Count)
-  p <- c(counts_and_expected$Prop_POC_Expected, counts_and_expected$Prop_White_Expected, counts_and_expected$Prop_Unknown_Expected)
-res <- chisq.test(counts, p)
-print(res)
-}
+# for (i in counts_and_expected) {
+#   counts <- c(counts_and_expected$POC_Count, counts_and_expected$White_Count, counts_and_expected$Unknown_Count)
+#   p <- c(counts_and_expected$Prop_POC_Expected, counts_and_expected$Prop_White_Expected, counts_and_expected$Prop_Unknown_Expected)
+# res <- chisq.test(counts, p)
+# print(res)
+# }
 #problem because some expected values are too low
 ```
 
 ```{r}
-#need a dataset with state and college_type?
+#need a dataset with state and college_type
 test_data <- counts_and_expected %>%
   inner_join(college_demographics, by = "activistcodename") %>%
   #Need actual proportions for visualizations
@@ -102,12 +101,25 @@ test_data %>%
   group_by(state, college_type) %>%
   count()
 
+#find total counts of campaigned people in each college
+test_data <- test_data %>%
+  mutate(total_count = POC_Count + White_Count + Unknown_Count,
+  expected_POC_count = total_count * Prop_POC_Expected,
+  expected_White_count = total_count * Prop_White_Expected,
+  expected_Unknown_count = total_count * Prop_Unknown_Expected)
+
+#Find which colleges have expected count < 5
+test_data %>%
+  filter(expected_POC_count < 5 | expected_White_count < 5 | expected_Unknown_count < 5) %>%
+  View()
+```
+
+```{r}
 #turn off scientific notation
 options(scipen = 999)
 
 #test chi_squared
 results <- test_data %>%
-  #filter(sum_prop == 1) %>%
   do(tidy(chisq.test(
     c(.$POC_Count, .$White_Count, .$Unknown_Count),
     p = c(
@@ -129,6 +141,7 @@ results <- results %>%
   select(-c(parameter, method))
 View(results)
 ```
+
 
 ```{r}
 #tidy
