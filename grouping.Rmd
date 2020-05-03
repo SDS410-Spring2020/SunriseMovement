@@ -19,3 +19,20 @@ college_demographics <- read_csv(here("/data/college_demographics.csv"))
 additional_vars <- read_csv(here("/data/Smith_Capstone_Additional_Voter_File_Vars.csv"))
 ```
 
+```{r}
+# Expected proportions for each college
+new_college_dems <- college_demographics %>%
+  select(activistcodename, nonresident_alien,	unknown_race,	two_or_more_races,	white,	native_hawaiian_or_other_pac_islander,	hispanic,	black_or_african_american,	asian,	american_indian_or_alaska_native, Total_Pop, state, college_type)%>%
+  mutate(unknown = nonresident_alien + unknown_race + two_or_more_races) %>% 
+  mutate(POC = native_hawaiian_or_other_pac_islander + hispanic + black_or_african_american + asian + american_indian_or_alaska_native)%>%
+  select(activistcodename, white, unknown, POC, Total_Pop, state, college_type)
+
+```
+
+```{r}
+expected_counts <- new_college_dems %>%
+  mutate(white_counts = Total_Pop * (white/100))%>%
+  mutate(unknown_counts = Total_Pop * (unknown/100))%>%
+  mutate(POC_counts = Total_Pop * (POC/100))
+```
+
