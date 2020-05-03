@@ -95,7 +95,11 @@ print(res)
 ```{r}
 #need a dataset with state and college_type?
 test_data <- counts_and_expected %>%
-  inner_join(college_demographics, by = "activistcodename")
+  inner_join(college_demographics, by = "activistcodename") %>%
+  #Need actual proportions for visualizations
+  mutate(Prop_POC_Actual = POC_Count / (POC_Count+White_Count+Unknown_Count),
+         Prop_White_Actual = White_Count / (POC_Count+White_Count+Unknown_Count),
+         Prop_Unknown_Actual = Unknown_Count / (POC_Count+White_Count+Unknown_Count))
   
 #see how many of each college type each state has
 test_data %>%
@@ -115,10 +119,23 @@ View(results)
 college_info <- test_data %>%
   select(activistcodename, state, college_type)
 
+
 #View all chi squared tests
 results <- results %>%
   inner_join(college_info, by = "activistcodename") %>%
   select(-c(parameter, method))
 View(results)
+```
+
+```{r}
+#tidy
+for_viz <- test_data %>%
+  select(activistcodename, college_type, state, Prop_POC_Expected, Prop_White_Expected, Prop_Unknown_Expected, Prop_POC_Actual, Prop_White_Actual, Prop_Unknown_Actual) %>%
+  pivot_longer(c(Prop_POC_Expected, Prop_White_Expected, Prop_Unknown_Expected, Prop_POC_Actual, Prop_White_Actual, Prop_Unknown_Actual), names_to = "case", values_to = "proportion") %>%
+  separate(case, into=c("prop", "race", "value"), sep = "_") %>%
+  select(-c(prop))
+
+#plot
+ggplot(for_viz, aes(x = race, y = proportion, fill = value)) + geom_bar(stat="identity", position = "dodge", width = 0.7) + facet_wrap(~college_type)
 ```
 
