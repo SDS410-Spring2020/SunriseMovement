@@ -57,10 +57,10 @@ counts <- clean_data %>%
 ```{r}
 # Expected proportions for each college
 clean_college_dems <- college_demographics %>%
-  select(activistcodename, nonresident_alien,	unknown_race,	two_or_more_races,	white,	native_hawaiian_or_other_pac_islander,	hispanic,	black_or_african_american,	asian,	american_indian_or_alaska_native)%>%
+  select(activistcodename, nonresident_alien,	unknown_race,	two_or_more_races,	white,	native_hawaiian_or_other_pac_islander,	hispanic,	black_or_african_american,	asian,	american_indian_or_alaska_native, Total_Pop)%>%
   mutate(unknown = nonresident_alien + unknown_race + two_or_more_races) %>% 
   mutate(POC = native_hawaiian_or_other_pac_islander + hispanic + black_or_african_american + asian + american_indian_or_alaska_native)%>%
-  select(activistcodename, white, unknown, POC)
+  select(activistcodename, white, unknown, POC, Total_Pop)
 ```
 
 ```{r}
@@ -244,63 +244,86 @@ ggplot(for_viz_3,
 
 ```{r}
 #combine NH community colleges that we couldn't run individual tests on
-#THIS DOESNT WORK: even combining them gives expected count of < 5 
+
+#Get summed actual counts
 NH_test_data <- test_data %>%
   filter(activistcodename %in% c("Great Bay CommColleg", "Manchester CommColle", "NHTI")) %>%
-  mutate(NH_POC_Count = mean(NH_test_data$POC_Count),
-         NH_White_Count = mean(NH_test_data$White_Count),
-         NH_Unknown_Count = mean(NH_test_data$Unknown_Count),
-         NH_Expected_POC_Count = mean(NH_test_data$expected_POC_count),
-         NH_Expected_White_Count = mean(NH_test_data$expected_White_count),
-         NH_Expected_Unknown_Count = mean(NH_test_data$expected_Unknown_count),
-         NH_Prop_POC_Expected = mean(NH_test_data$Prop_POC_Expected),
-         NH_Prop_White_Expected = mean(NH_test_data$Prop_White_Expected),
-         NH_Prop_Unknown_Expected = mean(NH_test_data$Prop_Unknown_Expected),
-         NH_Prop_POC_Actual = mean(NH_test_data$Prop_POC_Actual),
-         NH_Prop_White_Actual = mean(NH_test_data$Prop_White_Actual),
-         NH_Prop_Unknown_Actual = mean(NH_test_data$Prop_Unknown_Actual))
+  mutate(sum_POC_count = sum(NH_test_data$POC_Count),
+         sum_White_count = sum(NH_test_data$White_Count),
+         sum_Unknown_count = sum(NH_test_data$Unknown_Count))
 
-NH_test_data[1, 1] <- "combined_NH_2yr_coll"
+#Get expected counts for colleges
+expected_counts <- clean_college_dems %>%
+  mutate(white_counts = Total_Pop * (white/100))%>%
+  mutate(unknown_counts = Total_Pop * (unknown/100))%>%
+  mutate(POC_counts = Total_Pop * (POC/100))
 
-NH_test_data <- NH_test_data %>%
+#Select colleges and sum counts for grouping
+NH_data <- expected_counts %>%
+  filter(activistcodename %in% c("Great Bay CommColleg", "Manchester CommColle", "NHTI")) %>%
+  mutate(NH_total = sum(Total_Pop),
+         NH_white_counts = sum(white_counts),
+         NH_POC_counts = sum(POC_counts),
+         NH_Unknown_counts = sum(unknown_counts),
+         NH_expected_white_Prop = NH_white_counts / NH_total,
+         NH_expected_POC_Prop = NH_POC_counts / NH_total,
+         NH_expected_Unknown_Prop = NH_Unknown_counts / NH_total)
+
+NH_data[1, 1] <- "combined_NH_2yr_coll"
+
+NH_data <- NH_data %>%
   filter(activistcodename == "combined_NH_2yr_coll") %>%
-  select(contains("NH")) %>%
-  View()
+  select(activistcodename, contains("NH")) %>%
+  #add in summed actual counts found from NH_test_data
+  mutate(actual_POC_count = 3,
+         actual_white_count = 50,
+         actual_unknown_count = 4)
 
-```
-
-```{r}
-#trying another way by summing
-NH_test_data <- test_data %>%
-  filter(activistcodename %in% c("Great Bay CommColleg", "Manchester CommColle", "NHTI"))%>%
-  mutate(NH_POC_Count = sum(NH_test_data$POC_Count),
-         NH_White_Count = sum(NH_test_data$White_Count),
-         NH_Unknown_Count = sum(NH_test_data$Unknown_Count),
-         NH_Expected_POC_Count = sum(NH_test_data$expected_POC_count),
-         NH_Expected_White_Count = sum(NH_test_data$expected_White_count),
-         NH_Expected_Unknown_Count = sum(NH_test_data$expected_Unknown_count),
-         #summing proportiongs doesn't make sense
-         NH_Prop_POC_Expected = sum(NH_test_data$Prop_POC_Expected),
-         NH_Prop_White_Expected = sum(NH_test_data$Prop_White_Expected),
-         NH_Prop_Unknown_Expected = sum(NH_test_data$Prop_Unknown_Expected),
-         NH_Prop_POC_Actual = sum(NH_test_data$Prop_POC_Actual),
-         NH_Prop_White_Actual = sum(NH_test_data$Prop_White_Actual),
-         NH_Prop_Unknown_Actual = sum(NH_test_data$Prop_Unknown_Actual))
-
-NH_test_data[1, 1] <- "combined_NH_2yr_coll"
-
-NH_test_data <- NH_test_data %>%
-  filter(activistcodename == "combined_NH_2yr_coll") %>%
-  select(contains("NH"))
-
-results_NH <- NH_test_data %>%
+#run chi squared test
+results_NH <- NH_data %>%
   do(tidy(chisq.test(
-    c(.$POC_Count, .$White_Count, .$Unknown_Count),
+    c(.$actual_POC_count, .$actual_white_count, .$actual_unknown_count),
     p = c(
-      .$Prop_POC_Expected,
-      .$Prop_White_Expected,
-      .$Prop_Unknown_Expected
+      .$NH_expected_POC_Prop,
+      .$NH_expected_white_Prop,
+      .$NH_expected_Unknown_Prop
     )
   )))
-View(results)
+View(results_NH)
+#insignificant results
+
+#Clean data to visualize results
+#create actual proportions
+NH_data <- NH_data %>%
+  mutate(total_count = actual_POC_count + actual_white_count + actual_unknown_count,
+         NH_actual_POC_prop = actual_POC_count / total_count,
+         NH_actual_white_prop = actual_white_count / total_count,
+         NH_actual_Unknown_prop = actual_unknown_count / total_count)
+
+#tidy
+for_viz_NH <- NH_data %>%
+  pivot_longer(
+    c(
+      NH_expected_white_Prop,
+      NH_expected_POC_Prop,
+      NH_expected_Unknown_Prop,
+      NH_actual_POC_prop,
+      NH_actual_white_prop,
+      NH_actual_Unknown_prop
+    ),
+    names_to = "case",
+    values_to = "proportion"
+  ) %>%
+  separate(case, into = c("NH", "case", "race", "value"), sep = "_") %>%
+  select(activistcodename, case, race, proportion)
+
+#visualize
+ggplot(for_viz_NH, 
+       aes(x = race, 
+           y = proportion, 
+           fill = case)) + 
+  geom_bar(stat = "identity", 
+           position = "dodge") +
+  ggtitle("grouped Great Bay CommColleg, Manchester CommColle, NHTI")
 ```
+
