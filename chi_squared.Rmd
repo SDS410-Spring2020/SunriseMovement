@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
-#too low
+#sample size too low
 Colby_Sawyer <- c(0,	1,	0)
 res <- chisq.test(Colby_Sawyer, p = c(0.11,	0.78,	0.11))
 res
@@ -38,6 +38,7 @@ res
 ```
 
 ```{r}
+#sample size too low
 #can't reject null
 Grand_View_Universit <- c(4,	28,	4)
 res <- chisq.test(Grand_View_Universit, p = c(0.16,	0.65,	0.19))
@@ -45,7 +46,7 @@ res
 ```
 
 ```{r}
-#too low
+#sample size too low
 Great_Bay_CommColleg <- c(0,	9,	1)
 res <- chisq.test(Great_Bay_CommColleg, p = c(0.07,	0.78,	0.15))
 res
@@ -66,6 +67,7 @@ res
 ```
 
 ```{r}
+#sample size too low
 #reject null
 New_England_College <- c(26,	72,	3)
 res <- chisq.test(New_England_College, p = c(0.26,	0.45,	0.29))
@@ -73,7 +75,7 @@ res
 ```
 
 ```{r}
-#too low
+#sample size too low
 NHTI <- c(3,	37,	2)
 res <- chisq.test(NHTI, p = c(0.11,	0.78,	0.11))
 res
@@ -87,6 +89,7 @@ res
 ```
 
 ```{r}
+#sample size too low
 #reject null
 Saint_Anselm_College <- c(8,	205,	1)
 res <- chisq.test(Saint_Anselm_College, p = c(0.07,	0.87,	0.06))
@@ -94,7 +97,7 @@ res
 ```
 
 ```{r}
-#too low
+#sample size too low
 Simpson_College <- c(0,	3,	1)
 res <- chisq.test(Simpson_College, p = c(0.10,	0.81,	0.09))
 res
@@ -115,6 +118,7 @@ res
 ```
 
 ```{r}
+#sample size too low
 #reject null
 UniofNHampshireManch <- c(1,	57,	0)
 res <- chisq.test(UniofNHampshireManch, p = c(0.14,	0.69,	0.17))
