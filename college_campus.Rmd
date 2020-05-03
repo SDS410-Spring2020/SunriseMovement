@@ -169,10 +169,18 @@ ggplot(for_viz,
            y = proportion, 
            fill = value)) + 
   geom_bar(stat = "identity", 
-           position = "dodge") + 
+           position = "dodge")  +
   facet_wrap(~college_type)
 
 #BY STATE:
+ggplot(for_viz, 
+       aes(x = race, 
+           y = proportion, 
+           fill = value)) + 
+  geom_bar(stat = "identity", 
+           position = "dodge") + 
+  facet_wrap(state~college_type)
+
 #Just NH
 ggplot(filter(for_viz, state == "NH"),
        aes(x = race, y = proportion, fill = value)) +
