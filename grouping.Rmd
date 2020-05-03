@@ -1,0 +1,21 @@
+---
+title: "grouping"
+author: "Sophia Foster"
+date: "5/3/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+library(broom)
+```
+
+```{r}
+college_campuses <- read_csv(here("/data/Smith_Capstone_College_Campus.csv"))
+unique_matched <- read_csv(here("/data/Smith_Capstone_Voters_Unique.csv"))
+college_demographics <- read_csv(here("/data/college_demographics.csv"))
+additional_vars <- read_csv(here("/data/Smith_Capstone_Additional_Voter_File_Vars.csv"))
+```
+
