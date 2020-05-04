@@ -213,12 +213,18 @@ ggplot(data =
 ```
 
 ```{r}
+library(RColorBrewer)
 ggplot(data = 
          filter(unique_matched, 
                 #vb_voterbase_age_bucket == "18-29",
                 race == "Caucasian"), 
-       aes(x = vb_voterbase_age, fill = gender)) +
-  geom_bar(bins = 12, position = "dodge")
+       aes(x = vb_voterbase_age_bucket, fill = gender)) +
+  geom_bar(bins = 12, position = "dodge") +
+  scale_fill_brewer(palette = "Dark2") +
+  labs(title = "Pledge to Vote Individuals",
+       x = "Age Bucket",
+       y = "Count",
+       fill = "Gender")
 ```
 
 ```{r}
@@ -257,7 +263,7 @@ base_plot <- function(data, title, scales = "fixed"){
   data %>%
 ggplot(aes(x = vb_voterbase_age_bucket, fill = gender)) +
   geom_bar(position = "dodge") +
-  scale_fill_viridis_d() +
+  scale_fill_manual(values = c("#be3a34", "#004f71", "#465a01")) +
   theme(axis.text.x = element_text(angle = 90)) + 
   facet_wrap(~vb_voterbase_race, scales = scales) +
   labs(title = title, x = "Age Group", y = "Count", fill = "Gender")
@@ -266,6 +272,7 @@ ggplot(aes(x = vb_voterbase_age_bucket, fill = gender)) +
 ```
 
 ```{r demographic_state}
+base_plot(data = pledge_to_vote, title = "Pledge to Vote Individuals")
 #Iowa
 base_plot(data = filter(pledge_to_vote, vb_tsmart_state == "IA"), title = "Iowa")
 
