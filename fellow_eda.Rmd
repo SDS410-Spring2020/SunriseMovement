@@ -29,16 +29,21 @@ fellow_stats$Class <- recode(fellow_stats$Class, "Middle Class, Upper Class / Ow
 
 ```{r}
 #bar graphs of each demographic factor
-ggplot(fellow_stats, aes(x = Sex)) +
+ggplot(fellow_stats, aes(x = Sex, fill = Sex)) +
   geom_bar()+
-  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  scale_fill_manual(values = c("#be3a34", "#004f71", "#465a01", "#981d97", "#51284f")) +
+  theme(axis.text.x = element_blank(), plot.title = element_text(size = 24), axis.title=element_text(size=18), legend.text=element_text(size=16), legend.title=element_text(size=18)) +
   labs(x = "Gender", y = "Count", title = "Gender of Field Fellows")
 
-ggplot(fellow_stats, aes(x = Race)) +
+ggplot(fellow_stats, aes(x = Race, fill = Race)) +
   geom_bar()+
-  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  scale_fill_manual(values = c("#be3a34", "#004f71", "#465a01", "#981d97", "#51284f")) +
+  theme(axis.text.x = element_blank(), plot.title = element_text(size = 24), axis.title=element_text(size=18), legend.text=element_text(size=16), legend.title=element_text(size=18)) +
   labs(x = "Race", y = "Count", title = "Race of Field Fellows")
 
+```
+
+```{r}
 ggplot(fellow_stats, aes(x = Class)) +
   geom_bar()+
   theme(axis.text.x = element_text(angle = 60, hjust = 1))
