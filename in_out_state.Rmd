@@ -21,6 +21,9 @@ college_dems_in_state <- college_demographics %>%
   drop_na(state)
 ```
 
+```{r}
+college_dems_in_state$college_type <- recode(college_dems_in_state$college_type, "Private not-for-profit, 4-year or above" = "Private, 4 Year (+)")
+```
 
 ```{r}
 ggplot(college_dems_in_state, 
@@ -30,7 +33,10 @@ ggplot(college_dems_in_state,
   geom_bar(stat = "identity", 
            position = "dodge") + 
   facet_wrap(~state)+
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))+
+  labs(title="Percent of In-State Students by College Type and State", fill = "College Type")+
+  xlab("College Type")+
+  ylab("Percent of Students")
 
 ```
 
