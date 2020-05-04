@@ -31,11 +31,13 @@ fellow_stats$Class <- recode(fellow_stats$Class, "Middle Class, Upper Class / Ow
 #bar graphs of each demographic factor
 ggplot(fellow_stats, aes(x = Sex)) +
   geom_bar()+
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x = "Gender", y = "Count", title = "Gender of Field Fellows")
 
 ggplot(fellow_stats, aes(x = Race)) +
   geom_bar()+
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x = "Race", y = "Count", title = "Race of Field Fellows")
 
 ggplot(fellow_stats, aes(x = Class)) +
   geom_bar()+

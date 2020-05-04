@@ -87,7 +87,7 @@ clean_data <- full_data %>%
   mutate(vb_voterbase_race = replace_na(vb_voterbase_race, "Unknown_Count"))
 
 counts <- clean_data %>%
-  group_by(activistcodename, vb_voterbase_race)%>%
+  group_by(activistcodeid, vb_voterbase_race)%>%
   count(vb_voterbase_race)%>%
   spread(vb_voterbase_race, n)
 ```
@@ -95,21 +95,21 @@ counts <- clean_data %>%
 ```{r}
 # Expected proportions for each college
 clean_college_dems <- college_demographics %>%
-  select(activistcodename, nonresident_alien,	unknown_race,	two_or_more_races,	white,	native_hawaiian_or_other_pac_islander,	hispanic,	black_or_african_american,	asian,	american_indian_or_alaska_native, Total_Pop)%>%
+  select(activistcodeid, activistcodename, nonresident_alien,	unknown_race,	two_or_more_races,	white,	native_hawaiian_or_other_pac_islander,	hispanic,	black_or_african_american,	asian,	american_indian_or_alaska_native, Total_Pop)%>%
   mutate(unknown = nonresident_alien + unknown_race + two_or_more_races) %>% 
   mutate(POC = native_hawaiian_or_other_pac_islander + hispanic + black_or_african_american + asian + american_indian_or_alaska_native)%>%
-  select(activistcodename, white, unknown, POC, Total_Pop)
+  select(activistcodeid, activistcodename, white, unknown, POC, Total_Pop)
 ```
 
 ```{r}
 counts_and_expected <- counts %>%
-  inner_join(clean_college_dems, by = "activistcodename")%>%
+  inner_join(clean_college_dems, by = "activistcodeid")%>%
   mutate(POC_Count = replace_na(POC_Count, 0))%>%
   mutate(Unknown_Count = replace_na(Unknown_Count, 0))%>%
   mutate(Prop_POC_Expected = (POC/100))%>%
   mutate(Prop_White_Expected = (white/100))%>%
   mutate(Prop_Unknown_Expected = (unknown/100))%>%
-  select(activistcodename, POC_Count, White_Count, Unknown_Count, Prop_POC_Expected, Prop_White_Expected, Prop_Unknown_Expected)%>%
+  select(activistcodeid, activistcodename, POC_Count, White_Count, Unknown_Count, Prop_POC_Expected, Prop_White_Expected, Prop_Unknown_Expected)%>%
   mutate(sum_prop = (Prop_POC_Expected + Prop_White_Expected + Prop_Unknown_Expected)) #%>% #fix this
   #filter(sum_prop == 1) #fix this
 View(counts_and_expected)
@@ -128,7 +128,7 @@ View(counts_and_expected)
 ```{r}
 #need a dataset with state and college_type
 test_data <- counts_and_expected %>%
-  inner_join(college_demographics, by = "activistcodename") %>%
+  inner_join(college_demographics, by = "activistcodeid") %>%
   #Need actual proportions for visualizations
   mutate(Prop_POC_Actual = POC_Count / (POC_Count+White_Count+Unknown_Count),
          Prop_White_Actual = White_Count / (POC_Count+White_Count+Unknown_Count),
@@ -157,6 +157,7 @@ options(scipen = 999)
 
 #test chi_squared
 results <- test_data %>%
+  filter(expected_POC_count >=5 & expected_White_count >= 5 & expected_Unknown_count >= 5) %>%
   do(tidy(chisq.test(
     c(.$POC_Count, .$White_Count, .$Unknown_Count),
     p = c(
@@ -169,12 +170,13 @@ View(results)
 
 #just basic college info to join with
 college_info <- test_data %>%
-  select(activistcodename, state, college_type)
+  select(activistcodeid, state, college_type)
 
 #View all chi squared tests
 results <- results %>%
-  inner_join(college_info, by = "activistcodename") %>%
-  select(-c(parameter, method))
+  inner_join(college_info, by = "activistcodeid") %>%
+  select(-c(parameter, method)) %>%
+  left_join(select(college_demographics, contains("activistcode")), by = "activistcodeid") 
 View(results)
 ```
 
@@ -183,7 +185,7 @@ View(results)
 #tidy
 for_viz <- test_data %>%
   select(
-    activistcodename,
+    activistcodeid,
     college_type,
     state,
     Prop_POC_Expected,
@@ -249,7 +251,7 @@ ggplot(filter(for_viz, state == "PA"),
 
 #Without colleges with too small of expected counts
 for_viz_2 <- for_viz %>%
-  anti_join(colleges_to_group, by = "activistcodename")
+  anti_join(colleges_to_group, by = "activistcodeid")
 
 ggplot(for_viz_2, 
        aes(x = race, 

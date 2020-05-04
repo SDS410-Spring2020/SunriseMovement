@@ -251,6 +251,19 @@ unique_matched %>%
   labs(title = "Pledge-to-Vote count by State",
        x = "State",
        y = "Count")
+
+
+unique_matched %>%
+  group_by(vb_vf_source_state) %>%
+  tally() %>%
+  arrange(desc(n)) %>%
+  ggplot(aes(x = vb_vf_source_state, y = n)) + 
+  geom_text(aes(label = vb_vf_source_state), size = 2) + 
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank()) +
+  labs(title = "Pledge-to-Vote count by State",
+       x = "State",
+       y = "Count")
 ```
 
 Targeted states: Iowa, New Hampshire, Pennsylvania, Massachusetts
