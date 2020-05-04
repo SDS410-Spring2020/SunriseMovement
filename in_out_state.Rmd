@@ -1,0 +1,48 @@
+---
+title: "in_out_state"
+author: "Sophia Foster"
+date: "5/3/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+```{r}
+college_demographics <- read_csv(here("/data/college_demographics.csv"))
+```
+
+```{r}
+college_dems_in_state <- college_demographics %>%
+  rename(foreign_countries = "foreign countries") %>%
+  mutate(percent_in = (100*in_state) / (in_state + out_of_state + foreign_countries + unknown_residence))%>%
+  drop_na(state)
+```
+
+
+```{r}
+ggplot(college_dems_in_state, 
+       aes(x = college_type, 
+           y = percent_in,
+           fill = college_type)) + 
+  geom_bar(stat = "identity", 
+           position = "dodge") + 
+  facet_wrap(~state)+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+```
+
+```{r}
+#by class, color race and sex
+ggplot(college_demographics, aes(x = Class, fill=Race)) +
+  geom_bar()+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+ggplot(fellow_stats, aes(x = Class, fill=Sex)) +
+  geom_bar()+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+```
+```
+
