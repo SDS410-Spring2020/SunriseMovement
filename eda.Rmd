@@ -153,18 +153,6 @@ ggplot(elections, aes(x = election, y = voted)) +
   theme(axis.text.x = element_text(angle = 90))
 ```
 
-# Mapping 
-
-```{r}
-# library(sf)
-# library(tmap)
-# us_shapefile <- st_read(dsn = here("data/states_21basic"))
-# 
-# us <- tm_shape(us_shapefile) +
-#   tm_polygons()
-# us
-```
-
 # Demographic Breakdown
 
 ```{r}
@@ -299,6 +287,18 @@ base_plot(data = filter(pledge_to_vote, vb_tsmart_state == "PA"), title = "Penns
 base_plot(data = filter(pledge_to_vote, vb_tsmart_state == "MA"), title = "Massachusetts")
 ```
 
+```{r}
+pledge_to_vote %>%
+  ggplot(aes(x = vb_voterbase_race, fill = vb_voterbase_race)) +
+  geom_bar() +
+  labs(x = "Race", y = "Count", title = "Pledge-to-Vote Individuals", fill = "Race") +
+  scale_fill_manual(values = c("#be3a34", "#004f71", "#465a01", "#F2A900", "#003e51", "#981d97", "#51284f")) +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        legend.text = element_text(size = 12),
+        legend.title = element_blank(),
+        axis.title.x = element_text(size = 12)) 
+```
 
 Notes on next steps from 4/8 mtg:
 
@@ -383,4 +383,106 @@ college_demographics %>%
   select(activistcodename, out_of_state) %>%
   View()
 ```
+
+
+
+# Mapping 
+
+```{r}
+state_abbreviations <- tibble::tribble(
+          ~STATE_NAME, ~abbreviation,
+          "Alabama",  "AL",
+          "Alaska", "AK",
+         "Arizona", "AZ",
+        "Arkansas", "AR",
+      "California", "CA",
+        "Colorado", "CO",
+     "Connecticut", "CT",
+        "Delaware", "DE",
+         "Florida", "FL",
+         "Georgia", "GA",
+          "Hawaii", "HI",
+           "Idaho", "ID",
+        "Illinois", "IL",
+         "Indiana", "IN",
+            "Iowa", "IA",
+          "Kansas", "KS",
+        "Kentucky", "KY",
+       "Louisiana", "LA",
+           "Maine", "ME",
+        "Maryland", "MD",
+   "Massachusetts", "MA",
+        "Michigan", "MI",
+       "Minnesota", "MN",
+     "Mississippi", "MS",
+        "Missouri", "MO",
+         "Montana", "MT",
+        "Nebraska", "NE",
+          "Nevada", "NV",
+   "New Hampshire", "NH",
+      "New Jersey", "NJ",
+      "New Mexico", "NM",
+        "New York", "NY",
+  "North Carolina", "NC",
+    "North Dakota", "ND",
+            "Ohio", "OH",
+        "Oklahoma", "OK",
+          "Oregon", "OR",
+    "Pennsylvania", "PA",
+    "Rhode Island", "RI",
+  "South Carolina", "SC",
+    "South Dakota", "SD",
+       "Tennessee", "TN",
+           "Texas", "TX",
+            "Utah", "UT",
+         "Vermont", "VT",
+        "Virginia", "VA",
+      "Washington", "WA",
+   "West Virginia", "WV",
+       "Wisconsin", "WI",
+         "Wyoming", "WY"
+  )
+
+```
+
+
+```{r}
+library(sf)
+library(tmap)
+library(leaflet)
+
+
+
+us_shapefile <- st_read(dsn = here("data/states_21basic")) %>%
+  filter(!STATE_NAME %in% c("Alaska", "Hawaii", "District of Columbia")) %>%
+  left_join(state_abbreviations, by = "STATE_NAME") %>%
+  left_join(tally(group_by(pledge_to_vote, vb_vf_source_state)), by = c("abbreviation" = "vb_vf_source_state")) %>%
+  mutate(n = ifelse(is.na(n),0, n)) %>%
+  rename(`Pledge to Vote Count` = n)
+
+us <- tm_shape(us_shapefile) +
+  tm_polygons(col = "Pledge to Vote Count",
+              palette = "YlGnBu",
+              breaks = c(0, 50, 100, 250, 500, 1000, Inf))
+us
+
+```
+
+```{r}
+targeted_states <- us_shapefile %>%
+  mutate(highlight = ifelse(abbreviation %in% c("IA", "NH", "PA"), 1, 0))
+
+targeted_states_map <- tm_shape(targeted_states) +
+  tm_polygons(col = "highlight",
+              legend.show = FALSE)
+targeted_states_map
+  
+  
+  us <- tm_shape(us_shapefile) +
+  tm_polygons(col = "Pledge to Vote Count",
+              palette = "YlGnBu",
+              breaks = c(0, 50, 100, 250, 500, 1000, Inf))
+us
+```
+
 

@@ -271,7 +271,7 @@ ggplot(for_viz_2,
 ```{r}
 #visualizing only the ones unable to run tests on
 for_viz_3 <- for_viz %>%
-  inner_join(colleges_to_group, by = "activistcodename")
+  inner_join(colleges_to_group, by = "activistcodeid")
 
 ggplot(for_viz_3, 
        aes(x = race, 
