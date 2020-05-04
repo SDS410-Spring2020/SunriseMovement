@@ -8,6 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(here)
 ```
 
 ```{r}
@@ -18,27 +19,28 @@ college_demographics <- read_csv(here("/data/college_demographics.csv"))
 college_dems_in_state <- college_demographics %>%
   rename(foreign_countries = "foreign countries") %>%
   mutate(percent_in = (100*in_state) / (in_state + out_of_state + foreign_countries + unknown_residence))%>%
-  drop_na(state)
+  drop_na(state, in_state)
+
+college_dems_in_state$college_type <- factor(college_dems_in_state$college_type, levels = c("Public, 2-year", "Public, 4-year or above", "Private not-for-profit, 4-year or above"))
 ```
 
 ```{r}
-college_dems_in_state$college_type <- recode(college_dems_in_state$college_type, "Private not-for-profit, 4-year or above" = "Private, 4 Year (+)")
-college_dems_in_state$college_type <- recode(college_dems_in_state$college_type, "Private not-for-profit, 4-year or above" = "Private, 4 Year (+)")
+college_dems_in_state$college_type <-recode(college_dems_in_state$college_type, "Private not-for-profit, 4-year or above" = "Private, 4-Year or above")
 ```
 
 ```{r}
 ggplot(college_dems_in_state, 
-       aes(x = college_type, 
+       aes(x = state, 
            y = percent_in,
-           fill = college_type)) + 
+           fill = state)) + 
   geom_bar(stat = "identity", 
            position = "dodge") +
   scale_fill_manual(values = c("#be3a34", "#004f71", "#465a01")) +
-  facet_wrap(~state)+
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))+
-  labs(title="Percent of In-State Students by College Type and State", fill = "College Type")+
-  xlab("College Type")+
-  ylab("Percent of Students")
+  facet_wrap(~college_type)+
+  theme(axis.text.x = element_blank(), plot.title = element_text(size = 24), axis.title=element_text(size=18), legend.text=element_text(size=16), legend.title=element_text(size=18))+
+  labs(title="In-State Students by College Type and State", fill = "State")+
+  xlab("State")+
+  ylab("% of Students")
 
 ```
 
