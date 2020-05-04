@@ -30,16 +30,16 @@ college_dems_in_state$college_type <-recode(college_dems_in_state$college_type, 
 
 ```{r}
 ggplot(college_dems_in_state, 
-       aes(x = state, 
+       aes(x = college_type, 
            y = percent_in,
-           fill = state)) + 
+           fill = college_type)) + 
   geom_bar(stat = "identity", 
            position = "dodge") +
   scale_fill_manual(values = c("#be3a34", "#004f71", "#465a01")) +
-  facet_wrap(~college_type)+
+  facet_wrap(~state)+
   theme(axis.text.x = element_blank(), plot.title = element_text(size = 24), axis.title=element_text(size=18), legend.text=element_text(size=16), legend.title=element_text(size=18))+
-  labs(title="In-State Students by College Type and State", fill = "State")+
-  xlab("State")+
+  labs(title="In-State Students by College Type and State", fill = "College Type")+
+  xlab("College Type")+
   ylab("% of Students")
 
 ```
