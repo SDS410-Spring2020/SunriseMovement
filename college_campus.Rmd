@@ -20,14 +20,52 @@ additional_vars <- read_csv(here("/data/Smith_Capstone_Additional_Voter_File_Var
 ```
 
 ```{r}
-codes_to_keep <- c("St Josephs", "Thomas Jefferson Uni", "Saint Anselm College", "Communty College Phl", "UniOfNorthernIowa", "Grand View Universit", "Dartmouth College", "Drake University", "Keene State College", "Simpson College", "Antioch University", "Great Bay CommColleg", "Manchester CommColle", "Plymouth State Unive", "New England College", "NHTI","OLDCommunty College", "White Mountains ComC", "Franklin Pierce Univ", "Granite State Colleg", "University of Iowa", "Grinnell University", "OLD Grinnel", "UniofNHampshireManch", "Temple", "River Valley CommCol", "Drexel University", "Southern New Hampshi", "Uni of New Hampshire", "Uni of Pennsylvania", "Iowa StateUniversity", "Central College", "Colby-Sawyer College", "UniScienceinPhilly", "La Salle", "DesMoinesCommCollege", "Rivier University")
+codes_to_keep <- c(4600748,
+  4600752,
+  4600785,
+  4598681,
+  4616686,
+  4600760,
+  4600781,
+  4600756,
+  4600775,
+  4600761,
+  4600779,
+  4600766,
+  4600767,
+  4600776,
+  4600783,
+  4600768,
+  4598682,
+  4600770,
+  4600782,
+  #4587626, pledge to vote
+  4600771,
+  4600754,
+  4600757,
+  4600758,
+  4600778,
+  4598678,
+  4600769,
+  4598684,
+  4600786,
+  4600777,
+  4598680,
+  4600755,
+  4646492,
+  4600780,
+  4616703,
+  4600750,
+  4600759,
+  4600784)
+
 ```
 
 ```{r}
 matched_w_campuses <- unique_matched %>%
   select(-contains("activistcode")) %>%
   left_join(select(college_campuses, vanid, activistcodeid, activistcodename), by = "vanid") %>%
-  filter(activistcodename %in% codes_to_keep) 
+  filter(activistcodeid %in% codes_to_keep) 
 full_data <- matched_w_campuses %>%
   left_join(select(additional_vars, van_id, vb_voterbase_race:tb_income_range_prem_cd), by = c("vanid" = "van_id"))
 ```
@@ -45,7 +83,7 @@ full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Native Ameri
 
 clean_data <- full_data %>% 
   select(van_id, activistcodeid, activistcodename, vb_voterbase_race)%>%
-  filter(activistcodename %in% codes_to_keep)%>%
+  filter(activistcodeid %in% codes_to_keep)%>%
   mutate(vb_voterbase_race = replace_na(vb_voterbase_race, "Unknown_Count"))
 
 counts <- clean_data %>%
@@ -326,4 +364,73 @@ ggplot(for_viz_NH,
            position = "dodge") +
   ggtitle("grouped Great Bay CommColleg, Manchester CommColle, NHTI")
 ```
+
+
+## Case Study
+
+```{r}
+case_study_df <- test_data %>% 
+  select(activistcodename, contains("_Count"), state, college_type, Total_Pop, out_of_state) 
+
+
+case_study_df %>%
+  select(activistcodename, state, college_type, total_count, Total_Pop, out_of_state) %>%
+  arrange(state, desc(total_count)) %>%
+  View()
+
+
+snu <- full_data %>%
+  filter(activistcodeid == 4600786) %>%
+  group_by(vb_vf_source_state) %>%
+  tally() %>%
+  arrange(desc(n))
+
+sum(snu$n) - 91
+
+#77 out of state students reached at SNU
+
+
+case_study <- function(college_act_id) {
+  a <- full_data %>%
+    filter(activistcodeid == college_act_id) %>%
+    group_by(vb_vf_source_state) %>%
+    tally() %>%
+    arrange(desc(n))
+  return(a)
+}
+
+#southern new hampshire university
+snu <- case_study(4600786)
+snu
+
+#new england college 78% out of state, 	2521 students
+nec <- case_study(4600783)
+nec
+sum(nec$n) - nec$n[1]
+#102 people targeted, only 27 were registered to vote in NH! they got 75 out of state people
+
+#university of nh manchester, 4% out of state
+unhm <- case_study(4600778)
+unhm
+sum(unhm$n) - unhm$n[1]
+#out of 58 people, they had 20 people out of state
+
+#great bay community college, 6% out of state, 1887 students
+gbcc <- case_study(4600766)
+gbcc
+#all were from NH! granted this is a small sample size, but 
+
+#nhti 3% out of state, 	3478 students, 42 reached
+nhti <- case_study(4600768)
+nhti
+sum(nhti$n) - nhti$n[1]
+#only 5 out of state
+```
+
+
+
+
+
+
+
 
