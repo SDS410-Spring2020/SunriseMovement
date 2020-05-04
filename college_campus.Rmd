@@ -44,12 +44,11 @@ full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Hispanic" = 
 full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Native American" = "POC_Count")
 
 clean_data <- full_data %>% 
-  select(van_id, state.x, activistcodeid.x, activistcodeid.y, activistcodename.y, vb_voterbase_race)%>%
-  filter(activistcodename.y %in% codes_to_keep)%>%
-  mutate(vb_voterbase_race = replace_na(vb_voterbase_race, "Unknown"))
+  select(van_id, activistcodeid, activistcodename, vb_voterbase_race)%>%
+  filter(activistcodename %in% codes_to_keep)%>%
+  mutate(vb_voterbase_race = replace_na(vb_voterbase_race, "Unknown_Count"))
 
 counts <- clean_data %>%
-  mutate(activistcodename = activistcodename.y) %>%
   group_by(activistcodename, vb_voterbase_race)%>%
   count(vb_voterbase_race)%>%
   spread(vb_voterbase_race, n)
@@ -58,10 +57,10 @@ counts <- clean_data %>%
 ```{r}
 # Expected proportions for each college
 clean_college_dems <- college_demographics %>%
-  select(activistcodename, nonresident_alien,	unknown_race,	two_or_more_races,	white,	native_hawaiian_or_other_pac_islander,	hispanic,	black_or_african_american,	asian,	american_indian_or_alaska_native)%>%
+  select(activistcodename, nonresident_alien,	unknown_race,	two_or_more_races,	white,	native_hawaiian_or_other_pac_islander,	hispanic,	black_or_african_american,	asian,	american_indian_or_alaska_native, Total_Pop)%>%
   mutate(unknown = nonresident_alien + unknown_race + two_or_more_races) %>% 
   mutate(POC = native_hawaiian_or_other_pac_islander + hispanic + black_or_african_american + asian + american_indian_or_alaska_native)%>%
-  select(activistcodename, white, unknown, POC)
+  select(activistcodename, white, unknown, POC, Total_Pop)
 ```
 
 ```{r}
@@ -79,17 +78,17 @@ View(counts_and_expected)
 ```
 
 ```{r}
-for (i in counts_and_expected) {
-  counts <- c(counts_and_expected$POC_Count, counts_and_expected$White_Count, counts_and_expected$Unknown_Count)
-  p <- c(counts_and_expected$Prop_POC_Expected, counts_and_expected$Prop_White_Expected, counts_and_expected$Prop_Unknown_Expected)
-res <- chisq.test(counts, p)
-print(res)
-}
+# for (i in counts_and_expected) {
+#   counts <- c(counts_and_expected$POC_Count, counts_and_expected$White_Count, counts_and_expected$Unknown_Count)
+#   p <- c(counts_and_expected$Prop_POC_Expected, counts_and_expected$Prop_White_Expected, counts_and_expected$Prop_Unknown_Expected)
+# res <- chisq.test(counts, p)
+# print(res)
+# }
 #problem because some expected values are too low
 ```
 
 ```{r}
-#need a dataset with state and college_type?
+#need a dataset with state and college_type
 test_data <- counts_and_expected %>%
   inner_join(college_demographics, by = "activistcodename") %>%
   #Need actual proportions for visualizations
@@ -102,12 +101,24 @@ test_data %>%
   group_by(state, college_type) %>%
   count()
 
+#find total counts of campaigned people in each college
+test_data <- test_data %>%
+  mutate(total_count = POC_Count + White_Count + Unknown_Count,
+  expected_POC_count = total_count * Prop_POC_Expected,
+  expected_White_count = total_count * Prop_White_Expected,
+  expected_Unknown_count = total_count * Prop_Unknown_Expected)
+
+#Find which colleges have expected count < 5
+colleges_to_group <- test_data %>%
+  filter(expected_POC_count < 5 | expected_White_count < 5 | expected_Unknown_count < 5)
+```
+
+```{r}
 #turn off scientific notation
 options(scipen = 999)
 
 #test chi_squared
 results <- test_data %>%
-  #filter(sum_prop == 1) %>%
   do(tidy(chisq.test(
     c(.$POC_Count, .$White_Count, .$Unknown_Count),
     p = c(
@@ -122,13 +133,13 @@ View(results)
 college_info <- test_data %>%
   select(activistcodename, state, college_type)
 
-
 #View all chi squared tests
 results <- results %>%
   inner_join(college_info, by = "activistcodename") %>%
   select(-c(parameter, method))
 View(results)
 ```
+
 
 ```{r}
 #tidy
@@ -197,4 +208,122 @@ ggplot(filter(for_viz, state == "PA"),
   geom_bar(stat = "identity", position = "dodge") +
   facet_wrap(~ college_type) +
   ggtitle("Pennsylvania")
+
+#Without colleges with too small of expected counts
+for_viz_2 <- for_viz %>%
+  anti_join(colleges_to_group, by = "activistcodename")
+
+ggplot(for_viz_2, 
+       aes(x = race, 
+           y = proportion, 
+           fill = value)) + 
+  geom_bar(stat = "identity", 
+           position = "dodge") + 
+  facet_wrap(state~college_type)
+
+#see how many of each type of college per state is left after removed the ones not possible
+#to run a chi-squared test on
+# for_viz_2 %>%
+#   group_by(state, college_type) %>%
+#   count()
 ```
+
+```{r}
+#visualizing only the ones unable to run tests on
+for_viz_3 <- for_viz %>%
+  inner_join(colleges_to_group, by = "activistcodename")
+
+ggplot(for_viz_3, 
+       aes(x = race, 
+           y = proportion, 
+           fill = value)) + 
+  geom_bar(stat = "identity", 
+           position = "dodge") + 
+  facet_wrap(~activistcodename)
+```
+
+```{r}
+#combine NH community colleges that we couldn't run individual tests on
+
+#Get summed actual counts
+NH_test_data <- test_data %>%
+  filter(activistcodename %in% c("Great Bay CommColleg", "Manchester CommColle", "NHTI")) %>%
+  mutate(sum_POC_count = sum(NH_test_data$POC_Count),
+         sum_White_count = sum(NH_test_data$White_Count),
+         sum_Unknown_count = sum(NH_test_data$Unknown_Count))
+
+#Get expected counts for colleges
+expected_counts <- clean_college_dems %>%
+  mutate(white_counts = Total_Pop * (white/100))%>%
+  mutate(unknown_counts = Total_Pop * (unknown/100))%>%
+  mutate(POC_counts = Total_Pop * (POC/100))
+
+#Select colleges and sum counts for grouping
+NH_data <- expected_counts %>%
+  filter(activistcodename %in% c("Great Bay CommColleg", "Manchester CommColle", "NHTI")) %>%
+  mutate(NH_total = sum(Total_Pop),
+         NH_white_counts = sum(white_counts),
+         NH_POC_counts = sum(POC_counts),
+         NH_Unknown_counts = sum(unknown_counts),
+         NH_expected_white_Prop = NH_white_counts / NH_total,
+         NH_expected_POC_Prop = NH_POC_counts / NH_total,
+         NH_expected_Unknown_Prop = NH_Unknown_counts / NH_total)
+
+NH_data[1, 1] <- "combined_NH_2yr_coll"
+
+NH_data <- NH_data %>%
+  filter(activistcodename == "combined_NH_2yr_coll") %>%
+  select(activistcodename, contains("NH")) %>%
+  #add in summed actual counts found from NH_test_data
+  mutate(actual_POC_count = 3,
+         actual_white_count = 50,
+         actual_unknown_count = 4)
+
+#run chi squared test
+results_NH <- NH_data %>%
+  do(tidy(chisq.test(
+    c(.$actual_POC_count, .$actual_white_count, .$actual_unknown_count),
+    p = c(
+      .$NH_expected_POC_Prop,
+      .$NH_expected_white_Prop,
+      .$NH_expected_Unknown_Prop
+    )
+  )))
+View(results_NH)
+#insignificant results
+
+#Clean data to visualize results
+#create actual proportions
+NH_data <- NH_data %>%
+  mutate(total_count = actual_POC_count + actual_white_count + actual_unknown_count,
+         NH_actual_POC_prop = actual_POC_count / total_count,
+         NH_actual_white_prop = actual_white_count / total_count,
+         NH_actual_Unknown_prop = actual_unknown_count / total_count)
+
+#tidy
+for_viz_NH <- NH_data %>%
+  pivot_longer(
+    c(
+      NH_expected_white_Prop,
+      NH_expected_POC_Prop,
+      NH_expected_Unknown_Prop,
+      NH_actual_POC_prop,
+      NH_actual_white_prop,
+      NH_actual_Unknown_prop
+    ),
+    names_to = "case",
+    values_to = "proportion"
+  ) %>%
+  separate(case, into = c("NH", "case", "race", "value"), sep = "_") %>%
+  select(activistcodename, case, race, proportion)
+
+#visualize
+ggplot(for_viz_NH, 
+       aes(x = race, 
+           y = proportion, 
+           fill = case)) + 
+  geom_bar(stat = "identity", 
+           position = "dodge") +
+  ggtitle("grouped Great Bay CommColleg, Manchester CommColle, NHTI")
+```
+
