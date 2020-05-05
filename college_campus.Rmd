@@ -208,46 +208,76 @@ for_viz <- test_data %>%
     values_to = "proportion"
   ) %>%
   separate(case, into = c("prop", "race", "value"), sep = "_") %>%
-  select(-c(prop))
+  select(-c(prop)) %>%
+  mutate(percent = proportion * 100)
 
 #plot
 ggplot(for_viz, 
        aes(x = race, 
-           y = proportion, 
+           y = percent, 
            fill = value)) + 
   geom_bar(stat = "identity", 
            position = "dodge")  +
-  facet_wrap(~college_type)
+  #facet_wrap(~college_type)
+  facet_wrap(~state) +
+  labs(x = "Race", y = "Percent", title = "Racial Demographics") +
+  scale_fill_manual(values = c("#be3a34", "#004f71"), labels = c("Pledge-to-Vote", "College-Wide")) +
+  theme(legend.title = element_blank(),
+        legend.text = element_text(size = 12),
+        axis.text.x = element_text(size = 10),
+        axis.title.x = element_text(size = 12)) 
+
+
 
 #BY STATE:
-ggplot(for_viz, 
-       aes(x = race, 
-           y = proportion, 
-           fill = value)) + 
-  geom_bar(stat = "identity", 
-           position = "dodge") + 
-  facet_wrap(state~college_type)
+# ggplot(for_viz, 
+#        aes(x = race, 
+#            y = proportion, 
+#            fill = value)) + 
+#   geom_bar(stat = "identity", 
+#            position = "dodge") + 
+#   facet_wrap(state~college_type)
 
+
+to_string <- as_labeller(c(`Private not-for-profit, 4-year or above` = "Private 4-year", `Public, 2-year` = "Public 2-year", `Public, 4-year or above` = "Public 4-year"))
 #Just NH
 ggplot(filter(for_viz, state == "NH"),
-       aes(x = race, y = proportion, fill = value)) +
+       aes(x = race, y = percent, fill = value)) +
   geom_bar(stat = "identity", position = "dodge") +
-  facet_wrap(~ college_type) +
-  ggtitle("New Hampshire")
+  facet_wrap(~ college_type, labeller = to_string) +
+  ggtitle("New Hampshire") +
+  labs(x = "Race", y = "Percent") +
+  scale_fill_manual(values = c("#be3a34", "#004f71"), labels = c("Pledge-to-Vote", "College-Wide")) +
+  theme(legend.title = element_blank(),
+        legend.text = element_text(size = 12),
+        axis.text.x = element_text(size = 10),
+        axis.title.x = element_text(size = 12))
 
 #Just IA
 ggplot(filter(for_viz, state == "IA"),
-       aes(x = race, y = proportion, fill = value)) +
+       aes(x = race, y = percent, fill = value)) +
   geom_bar(stat = "identity", position = "dodge") +
-  facet_wrap(~ college_type) +
-  ggtitle("Iowa")
+  facet_wrap(~ college_type, labeller = to_string) +
+  ggtitle("Iowa") +
+  labs(x = "Race", y = "Percent") +
+  scale_fill_manual(values = c("#be3a34", "#004f71"), labels = c("Pledge-to-Vote", "College-Wide")) +
+  theme(legend.title = element_blank(),
+        legend.text = element_text(size = 12),
+        axis.text.x = element_text(size = 10),
+        axis.title.x = element_text(size = 12))
 
 #Just PA
 ggplot(filter(for_viz, state == "PA"),
-       aes(x = race, y = proportion, fill = value)) +
+       aes(x = race, y = percent, fill = value)) +
   geom_bar(stat = "identity", position = "dodge") +
-  facet_wrap(~ college_type) +
-  ggtitle("Pennsylvania")
+  facet_wrap(~ college_type, labeller = to_string) +
+  ggtitle("Pennsylvania") +
+  labs(x = "Race", y = "Percent") +
+  scale_fill_manual(values = c("#be3a34", "#004f71"), labels = c("Pledge-to-Vote", "College-Wide")) +
+  theme(legend.title = element_blank(),
+        legend.text = element_text(size = 12),
+        axis.text.x = element_text(size = 10),
+        axis.title.x = element_text(size = 12))
 
 #Without colleges with too small of expected counts
 for_viz_2 <- for_viz %>%

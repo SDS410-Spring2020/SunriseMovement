@@ -474,6 +474,7 @@ targeted_states <- us_shapefile %>%
 
 targeted_states_map <- tm_shape(targeted_states) +
   tm_polygons(col = "highlight",
+              palette = "YlGnBu",
               legend.show = FALSE)
 targeted_states_map
   
