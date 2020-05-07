@@ -176,7 +176,8 @@ college_info <- test_data %>%
 results <- results %>%
   inner_join(college_info, by = "activistcodeid") %>%
   select(-c(parameter, method)) %>%
-  left_join(select(college_demographics, contains("activistcode")), by = "activistcodeid") 
+  left_join(select(college_demographics, contains("activistcode")), by = "activistcodeid") %>%
+  select(activistcodename, college_type, state, statistic, p.value)
 View(results)
 ```
 
