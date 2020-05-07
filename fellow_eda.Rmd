@@ -32,54 +32,13 @@ fellow_stats$Class <- recode(fellow_stats$Class, "Middle Class, Upper Class / Ow
 ggplot(fellow_stats, aes(x = Sex, fill = Sex)) +
   geom_bar()+
   scale_fill_manual(values = c("#be3a34", "#004f71", "#465a01", "#981d97", "#51284f")) +
-  theme(axis.text.x = element_blank(), plot.title = element_text(size = 24), axis.title=element_text(size=18), legend.text=element_text(size=16), legend.title=element_text(size=18)) +
-  labs(x = "Gender", y = "Count", title = "Gender of Field Fellows")
+  theme(axis.text.x = element_blank(), plot.title = element_text(size = 24), axis.title=element_text(size=18), legend.text=element_text(size=16), legend.title=element_text(size=18), axis.ticks = element_blank()) +
+  labs(x = "Gender", y = "Count", title = "Gender of Field Fellows", fill="Gender")
 
 ggplot(fellow_stats, aes(x = Race, fill = Race)) +
   geom_bar()+
   scale_fill_manual(values = c("#be3a34", "#004f71", "#465a01", "#981d97", "#51284f")) +
-  theme(axis.text.x = element_blank(), plot.title = element_text(size = 24), axis.title=element_text(size=18), legend.text=element_text(size=16), legend.title=element_text(size=18)) +
+  theme(axis.text.x = element_blank(), plot.title = element_text(size = 24), axis.title=element_text(size=18), legend.text=element_text(size=16), legend.title=element_text(size=18), axis.ticks = element_blank()) +
   labs(x = "Race", y = "Count", title = "Race of Field Fellows")
 
 ```
-
-```{r}
-ggplot(fellow_stats, aes(x = Class)) +
-  geom_bar()+
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))
-
-```
-
-```{r}
-#by race, color sex and class
-ggplot(fellow_stats, aes(x = Race, fill=Sex)) +
-  geom_bar()+
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))
-
-ggplot(fellow_stats, aes(x = Race, fill=Class)) +
-  geom_bar()+
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))
-```
-
-```{r}
-#by sex, color race and class
-ggplot(fellow_stats, aes(x = Sex, fill=Race)) +
-  geom_bar()+
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))
-
-ggplot(fellow_stats, aes(x = Sex, fill=Class)) +
-  geom_bar()+
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))
-```
-
-```{r}
-#by class, color race and sex
-ggplot(fellow_stats, aes(x = Class, fill=Race)) +
-  geom_bar()+
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))
-
-ggplot(fellow_stats, aes(x = Class, fill=Sex)) +
-  geom_bar()+
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))
-```
-
