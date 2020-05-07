@@ -297,7 +297,8 @@ pledge_to_vote %>%
         axis.ticks.x = element_blank(),
         legend.text = element_text(size = 12),
         legend.title = element_blank(),
-        axis.title.x = element_text(size = 12)) 
+        axis.title.x = element_text(size = 12)) +
+  facet_wrap(~gender)
 ```
 
 Notes on next steps from 4/8 mtg:

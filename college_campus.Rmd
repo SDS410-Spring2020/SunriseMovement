@@ -402,11 +402,13 @@ ggplot(for_viz_NH,
 
 ```{r}
 case_study_df <- test_data %>% 
-  select(activistcodename, contains("_Count"), state, college_type, Total_Pop, out_of_state) 
+  select(activistcodeid, contains("_Count"), state, college_type, Total_Pop, out_of_state) %>%
+  left_join(select(college_demographics, activistcodeid, activistcodename), by = "activistcodeid") %>%
+  select(activistcodeid, activistcodename, everything())
 
 
 case_study_df %>%
-  select(activistcodename, state, college_type, total_count, Total_Pop, out_of_state) %>%
+  select(activistcodeid, state, college_type, total_count, Total_Pop, out_of_state) %>%
   arrange(state, desc(total_count)) %>%
   View()
 
