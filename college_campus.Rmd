@@ -12,7 +12,12 @@ library(here)
 library(broom)
 ```
 
+# Data importing and cleaning
+
+This is the same process as in eda.Rmd, see there for more detailed info. 
+
 ```{r}
+#Read in data
 college_campuses <- read_csv(here("/data/Smith_Capstone_College_Campus.csv"))
 unique_matched <- read_csv(here("/data/Smith_Capstone_Voters_Unique.csv"))
 college_demographics <- read_csv(here("/data/college_demographics.csv"))
@@ -70,9 +75,10 @@ full_data <- matched_w_campuses %>%
   left_join(select(additional_vars, van_id, vb_voterbase_race:tb_income_range_prem_cd), by = c("vanid" = "van_id"))
 ```
 
-
+# Recoding
 
 ```{r}
+#recode race into white, unknown, or poc
 full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Caucasian" = "White_Count")
 full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Uncoded" = "Unknown_Count")
 full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Other" = "POC_Count")
@@ -81,11 +87,13 @@ full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Asian" = "PO
 full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Hispanic" = "POC_Count")
 full_data$vb_voterbase_race <- recode(full_data$vb_voterbase_race, "Native American" = "POC_Count")
 
+#filter for only activist codes that are colleges
 clean_data <- full_data %>% 
   select(van_id, activistcodeid, activistcodename, vb_voterbase_race)%>%
   filter(activistcodeid %in% codes_to_keep)%>%
   mutate(vb_voterbase_race = replace_na(vb_voterbase_race, "Unknown_Count"))
 
+#counts by race
 counts <- clean_data %>%
   group_by(activistcodeid, vb_voterbase_race)%>%
   count(vb_voterbase_race)%>%
@@ -102,6 +110,7 @@ clean_college_dems <- college_demographics %>%
 ```
 
 ```{r}
+#combine counts of race and expected proportion for each college into one table
 counts_and_expected <- counts %>%
   inner_join(clean_college_dems, by = "activistcodeid")%>%
   mutate(POC_Count = replace_na(POC_Count, 0))%>%
@@ -110,20 +119,10 @@ counts_and_expected <- counts %>%
   mutate(Prop_White_Expected = (white/100))%>%
   mutate(Prop_Unknown_Expected = (unknown/100))%>%
   select(activistcodeid, activistcodename, POC_Count, White_Count, Unknown_Count, Prop_POC_Expected, Prop_White_Expected, Prop_Unknown_Expected)%>%
-  mutate(sum_prop = (Prop_POC_Expected + Prop_White_Expected + Prop_Unknown_Expected)) #%>% #fix this
-  #filter(sum_prop == 1) #fix this
-View(counts_and_expected)
+  mutate(sum_prop = (Prop_POC_Expected + Prop_White_Expected + Prop_Unknown_Expected)) 
+#View(counts_and_expected)
 ```
 
-```{r}
-# for (i in counts_and_expected) {
-#   counts <- c(counts_and_expected$POC_Count, counts_and_expected$White_Count, counts_and_expected$Unknown_Count)
-#   p <- c(counts_and_expected$Prop_POC_Expected, counts_and_expected$Prop_White_Expected, counts_and_expected$Prop_Unknown_Expected)
-# res <- chisq.test(counts, p)
-# print(res)
-# }
-#problem because some expected values are too low
-```
 
 ```{r}
 #need a dataset with state and college_type
@@ -166,7 +165,7 @@ results <- test_data %>%
       .$Prop_Unknown_Expected
     )
   )))
-View(results)
+#View(results)
 
 #just basic college info to join with
 college_info <- test_data %>%
@@ -178,12 +177,12 @@ results <- results %>%
   select(-c(parameter, method)) %>%
   left_join(select(college_demographics, contains("activistcode")), by = "activistcodeid") %>%
   select(activistcodename, college_type, state, statistic, p.value)
-View(results)
+#View(results)
 ```
 
 
 ```{r}
-#tidy
+#tidy data for visualizations
 for_viz <- test_data %>%
   select(
     activistcodeid,
@@ -239,8 +238,9 @@ ggplot(for_viz,
 #            position = "dodge") + 
 #   facet_wrap(state~college_type)
 
-
+#create facet labels
 to_string <- as_labeller(c(`Private not-for-profit, 4-year or above` = "Private 4-year", `Public, 2-year` = "Public 2-year", `Public, 4-year or above` = "Public 4-year"))
+
 #Just NH
 ggplot(filter(for_viz, state == "NH"),
        aes(x = race, y = percent, fill = value)) +
@@ -402,29 +402,20 @@ ggplot(for_viz_NH,
 ## Case Study
 
 ```{r}
+#create a table with the counts for each college, bring in activistcodename for clarity
 case_study_df <- test_data %>% 
   select(activistcodeid, contains("_Count"), state, college_type, Total_Pop, out_of_state) %>%
   left_join(select(college_demographics, activistcodeid, activistcodename), by = "activistcodeid") %>%
   select(activistcodeid, activistcodename, everything())
 
-
-case_study_df %>%
-  select(activistcodeid, state, college_type, total_count, Total_Pop, out_of_state) %>%
-  arrange(state, desc(total_count)) %>%
-  View()
-
-
-snu <- full_data %>%
-  filter(activistcodeid == 4600786) %>%
-  group_by(vb_vf_source_state) %>%
-  tally() %>%
-  arrange(desc(n))
-
-sum(snu$n) - 91
-
-#77 out of state students reached at SNU
+# examine the colleges to pick which ones to use as case study
+# case_study_df %>%
+#   select(activistcodeid, state, college_type, total_count, Total_Pop, out_of_state) %>%
+#   arrange(state, desc(total_count)) %>%
+#   View()
 
 
+#function to count by state within a college
 case_study <- function(college_act_id) {
   a <- full_data %>%
     filter(activistcodeid == college_act_id) %>%
@@ -461,6 +452,7 @@ nhti
 sum(nhti$n) - nhti$n[1]
 #only 5 out of state
 ```
+
 
 
 

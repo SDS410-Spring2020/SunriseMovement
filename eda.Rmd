@@ -18,6 +18,10 @@ library(tmap)
 library(leaflet)
 ```
 
+
+This .Rmd contains data wrangling, exploratory data analysis, visualizations, and mapping.
+
+
 ```{r read_data}
 #Read in Target Smart Data Dictionary
 ts_data_dict <- read_csv(here("/data/targetsmart_datadictionary.csv"), skip = 2) %>%
@@ -321,8 +325,7 @@ unique_matched %>%
 ```{r urbanicity}
 unique_matched %>% 
   group_by(urbanicity) %>% 
-  tally() %>% 
-  View()
+  tally() 
 ```
 
 ```{r}

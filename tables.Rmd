@@ -14,6 +14,7 @@ library(here)
 library(papaja)
 ```
 
+Note: run college_campus.Rmd first to have the necessary objects in your environment
 
 ```{r}
 unique_matched <- read_csv(here("/data/Smith_Capstone_Voters_Unique.csv"))
@@ -29,82 +30,92 @@ pledge_to_vote <- unique_matched %>%
 race_table <- pledge_to_vote %>%
   group_by(vb_voterbase_race) %>%
   tally() %>%
-  mutate(percent = (n/6199) * 100)
+  mutate(`Percent of Pledge-to-Vote Voters` = (n/6199) * 100) %>%
+  rename(Race = vb_voterbase_race) 
+race_table
 
 age_table <- pledge_to_vote %>%
   group_by(vb_voterbase_age_bucket) %>%
   tally() %>%
-  mutate(percent = (n/6199) * 100)
+  mutate(`Percent of Pledge-to-Vote Voters` = (n/6199) * 100) %>%
+  rename(`Age Group` = vb_voterbase_age_bucket)
+age_table
 
 gender_table <- pledge_to_vote %>%
   group_by(gender) %>%
   tally() %>%
-  mutate(percent = (n/6199) * 100)
+  mutate(`Percent of Pledge-to-Vote Voters` = (n/6199) * 100) %>%
+  rename(Gender = gender)
+gender_table
 
 state_table <- pledge_to_vote %>%
   mutate(source_state = ifelse(vb_vf_source_state %in% c("IA", "NH", "PA"), vb_vf_source_state, "Other")) %>%
   group_by(source_state) %>%
   tally() %>%
-  mutate(percent = (n/6199) * 100) %>%
+  mutate(`Percent of Pledge-to-Vote Voters` = (n/6199) * 100) %>%
   arrange(match(source_state, c("IA", "NH", "PA", "Other"))) %>%
-  rename(State = source_state,
-         Percent = percent)
+  rename(State = source_state)
 
 state_table
 ```
 
-```{r table_1, results = "asis"}
-apa_table(state_table,
-          landscape = TRUE,
-          escape = FALSE)
-```
 
 
 ```{r college_tables}
-# out_of_state_table <- case_study_df %>%
-#   ungroup() %>%
-#   select(activistcodename,state, college_type, out_of_state) %>%
-#   arrange(state, desc(out_of_state)) %>%
-#   mutate(college_name = case_when(
-#     activistcodename == 'Temple' ~ 'Temple University',
-# activistcodename == 'Uni of Pennsylvania' ~ 'University of Pennsylvania',
-# activistcodename == 'Communty College Phl' ~ 'Community College of Philadelphia',
-# activistcodename == 'Drexel University' ~ 'Drexel University',
-# activistcodename == 'St Josephs' ~ 'St. Josephs University',
-# activistcodename == 'La Salle' ~ 'La Salle University',
-# activistcodename == 'Thomas Jefferson Uni' ~ 'Thomas Jefferson University',
-# activistcodename == 'University of Iowa' ~ 'University of Iowa',
-# activistcodename == 'Iowa StateUniversity' ~ 'Iowa State University',
-# activistcodename == 'Drake University' ~ 'Drake University',
-# activistcodename == 'Grinnell University' ~ 'Grinnell College',
-# activistcodename == 'DesMoinesCommCollege' ~ 'Des Moines Community College',
-# activistcodename == 'Grand View Universit' ~ 'Grand View University',
-# activistcodename == 'Simpson College' ~ 'Simpson College',
-# activistcodename == 'Great Bay CommColleg' ~ 'Great Bay Community College',
-# activistcodename == 'Manchester CommColle' ~ 'Manchester Community College',
-# activistcodename == 'NHTI' ~ 'NHTI - Concord Community College',
-# activistcodename == 'Keene State College' ~ 'Keene State College',
-# activistcodename == 'Plymouth State Unive' ~ 'Plymouth State University',
-# activistcodename == 'Uni of New Hampshire' ~ 'University of New Hampshire',
-# activistcodename == 'UniofNHampshireManch' ~ 'Universith of New Hampshire Manchester',
-# activistcodename == 'Colby-Sawyer College' ~ 'Colby-Sawyer College',
-# activistcodename == 'Dartmouth College' ~ 'Dartmouth College',
-# activistcodename == 'New England College' ~ 'New England College',
-# activistcodename == 'Saint Anselm College' ~ 'Saint Anselm College',
-# activistcodename == 'Southern New Hampshi' ~ 'Southern New Hampshire University',
-# activistcodename == 'UniOfNorthernIowa' ~ 'University of Northern Iowa'
-#   )) %>%
-#   select(college_name, state, college_type, out_of_state)
-# 
-# college_race_table <- college_demographics %>%
-#   pivot_longer(cols = nonresident_alien:american_indian_or_alaska_native, names_to = "race", values_to = "race_percent") %>%
-#   group_by(state, college_type, race) %>%
-#   summarize(avg_race = mean(race_percent, na.rm = TRUE))
-# 
-# out_of_state_table <- college_demographics %>%
-#   group_by(state, college_type) %>%
-#   summarize(avg_in_state = mean(in_state, na.rm = TRUE),
-#     avg_out_of_state = mean(out_of_state, na.rm = TRUE))
-# View(out_of_state_table)
+colleges_table <- case_study_df %>%
+  ungroup() %>%
+  select(activistcodeid, activistcodename,state, college_type, out_of_state) %>%
+  arrange(state, desc(out_of_state)) %>%
+  mutate(college_name = case_when(
+    activistcodename == 'Temple' ~ 'Temple University',
+activistcodename == 'Uni of Pennsylvania' ~ 'University of Pennsylvania',
+activistcodename == 'Communty College Phl' ~ 'Community College of Philadelphia',
+activistcodename == 'Drexel University' ~ 'Drexel University',
+activistcodename == 'St Josephs' ~ 'St. Josephs University',
+activistcodename == 'La Salle' ~ 'La Salle University',
+activistcodename == 'Thomas Jefferson Uni' ~ 'Thomas Jefferson University',
+activistcodename == 'University of Iowa' ~ 'University of Iowa',
+activistcodename == 'Iowa StateUniversity' ~ 'Iowa State University',
+activistcodename == 'Drake University' ~ 'Drake University',
+activistcodename == 'Grinnell University' ~ 'Grinnell College',
+activistcodename == 'DesMoinesCommCollege' ~ 'Des Moines Community College',
+activistcodename == 'Grand View Universit' ~ 'Grand View University',
+activistcodename == 'Simpson College' ~ 'Simpson College',
+activistcodename == 'Great Bay CommColleg' ~ 'Great Bay Community College',
+activistcodename == 'Manchester CommColle' ~ 'Manchester Community College',
+activistcodename == 'NHTI' ~ 'NHTI - Concord Community College',
+activistcodename == 'Keene State College' ~ 'Keene State College',
+activistcodename == 'Plymouth State Unive' ~ 'Plymouth State University',
+activistcodename == 'Uni of New Hampshire' ~ 'University of New Hampshire',
+activistcodename == 'UniofNHampshireManch' ~ 'Universith of New Hampshire Manchester',
+activistcodename == 'Colby-Sawyer College' ~ 'Colby-Sawyer College',
+activistcodename == 'Dartmouth College' ~ 'Dartmouth College',
+activistcodename == 'New England College' ~ 'New England College',
+activistcodename == 'Saint Anselm College' ~ 'Saint Anselm College',
+activistcodename == 'Southern New Hampshi' ~ 'Southern New Hampshire University',
+activistcodename == 'UniOfNorthernIowa' ~ 'University of Northern Iowa'
+  )) %>%
+  inner_join(select(results, activistcodeid, statistic, p.value)) %>%
+  select(college_name, state, college_type, statistic, p.value) %>%
+  mutate(p.value = round(p.value, digits = 5),
+         statistic = round(statistic, digits = 2)) %>%
+  rename(`College Name` = college_name,
+         `State` = state,
+         `College Type` = college_type,
+         `Test Statistic` = statistic,
+         `P-Value` = p.value)
+colleges_table
+
+college_race_table <- college_demographics %>%
+  pivot_longer(cols = nonresident_alien:american_indian_or_alaska_native, names_to = "race", values_to = "race_percent") %>%
+  group_by(state, college_type, race) %>%
+  summarize(avg_race = mean(race_percent, na.rm = TRUE)) %>%
+  rename(`State` = state,
+         `College Type` = college_type,
+         `Race` = race,
+         `Average % of College` = avg_race)
+college_race_table
+
+
 ```
 
