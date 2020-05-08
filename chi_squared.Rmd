@@ -9,6 +9,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+This has individual tests for colleges. We didn't end up using these results (we automated it). This was helpful to think about how many schools at which we could reject the null (significant) and which ones had too small of a sample size to perform a test.
+
 ```{r}
 #sample size too low
 Colby_Sawyer <- c(0,	1,	0)

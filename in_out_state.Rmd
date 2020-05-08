@@ -11,6 +11,8 @@ library(tidyverse)
 library(here)
 ```
 
+This file creates a visualization of the percentage of in-state students by college type and by state.
+
 ```{r}
 college_demographics <- read_csv(here("/data/college_demographics.csv"))
 ```
