@@ -14,6 +14,9 @@ library(readxl)
 library(here)
 ```
 
+Create visualizations by gender and race of the field fellows.
+
+
 ```{r}
 fellow_stats_read <- read.csv(here("/data/fellow_demographics.csv"))
 ```
