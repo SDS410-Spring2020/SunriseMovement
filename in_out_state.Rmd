@@ -12,23 +12,26 @@ library(here)
 ```
 
 ```{r}
+#read data
 college_demographics <- read_csv(here("/data/college_demographics.csv"))
 ```
 
 ```{r}
+#create variable with percent of total students from in state
 college_dems_in_state <- college_demographics %>%
   rename(foreign_countries = "foreign countries") %>%
   mutate(percent_in = (100*in_state) / (in_state + out_of_state + foreign_countries + unknown_residence))%>%
   drop_na(state, in_state)
 
+#relevel college types
 college_dems_in_state$college_type <- factor(college_dems_in_state$college_type, levels = c("Public, 2-year", "Public, 4-year or above", "Private not-for-profit, 4-year or above"))
-```
 
-```{r}
+#rename college type for graph
 college_dems_in_state$college_type <-recode(college_dems_in_state$college_type, "Private not-for-profit, 4-year or above" = "Private, 4-Year or above")
 ```
 
 ```{r}
+#create bar graph
 ggplot(college_dems_in_state, 
        aes(x = college_type, 
            y = percent_in,
