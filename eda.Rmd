@@ -12,7 +12,10 @@ library(skimr)
 library(readxl)
 library(here)
 library(janitor)
-library(viridis)
+library(RColorBrewer)
+library(sf)
+library(tmap)
+library(leaflet)
 ```
 
 ```{r read_data}
@@ -23,19 +26,20 @@ ts_data_dict <- read_csv(here("/data/targetsmart_datadictionary.csv"), skip = 2)
 #Read in de-duplicated Matched file
 unique_matched <- read_csv(here("/data/Smith_Capstone_Voters_Unique.csv"))
 
+#Read in data from civis related to college campuses
 college_campuses <- read_csv(here("/data/Smith_Capstone_College_Campus.csv"))
 
+#Read in supplementary variables from the voter file
 additional_vars <- read_csv(here("/data/Smith_Capstone_Additional_Voter_File_Vars.csv"))
 
+#Read in college demographic data from NCES
 college_demographics <- read_csv(here("/data/college_demographics.csv"))
 ```
 
-```{r}
-# codes_to_keep <- c("Thomas Jefferson Uni", "Saint Anselm College", "Communty College Phl", "UniOfNorthernIowa", "Grand View Universit", "Dartmouth College", "Drake University", "Keene State College", "Simpson College", "Antioch University", "Great Bay CommColleg", "Manchester CommColle", "Plymouth State Unive", "New England College", "NHTI","OLDCommunty College", "White Mountains ComC", "Franklin Pierce Univ", "Granite State Colleg", "University of Iowa", "Grinnell University", "OLD Grinnel", "UniofNHampshireManch", "Temple", "River Valley CommCol", "Drexel University", "Southern New Hampshi", "Uni of New Hampshire", "Uni of Pennsylvania", "Iowa StateUniversity", "Central College", "Colby-Sawyer College", "UniScienceinPhilly", "La Salle", "DesMoinesCommCollege", "Rivier University")
-```
 
 
-```{r}
+```{r codes_to_keep}
+#define which activistcodeids to keep - all of these are the colleges only
 codes_to_keep <- c(4600748,
   4600752,
   4600785,
@@ -79,24 +83,29 @@ codes_to_keep <- c(4600748,
 
 
 
-```{r}
+```{r match_data}
+#add the college info to the other civis data, filter by activist codes that are colleges
 matched_w_campuses <- unique_matched %>%
   select(-contains("activistcode")) %>%
   left_join(select(college_campuses, vanid, activistcodeid, activistcodename), by = "vanid") %>%
   filter(activistcodeid %in% codes_to_keep) 
+
+#add supplementary voter file variables
 full_data <- matched_w_campuses %>%
   left_join(select(additional_vars, van_id, vb_voterbase_race:tb_income_range_prem_cd), by = c("vanid" = "van_id"))
 ```
 
 
-```{r}
+```{r pledge_to_vote}
+#bring in supplementary voter file variables, but not the college info
+#this is all of the people who pledged to vote
 pledge_to_vote <- unique_matched %>%
   left_join(select(additional_vars,van_id, vb_voterbase_race, tb_income_range_cd, tb_income_range_prem_cd), by = c("vanid" = "van_id")) %>%
   mutate(vb_voterbase_race = ifelse(is.na(vb_voterbase_race), "Uncoded", vb_voterbase_race))
 ```
 
 
-# Elections 
+# Elections Exploration
 
 ```{r voting_mechanisms}
 ggplot(unique_matched, aes(x = vb_vf_g2018)) +
@@ -119,6 +128,7 @@ ggplot(unique_matched, aes(x = vb_vf_g2018)) +
 ```
 
 ```{r}
+#graph how many people voted in each election
 unique_matched2 <- unique_matched %>%
   mutate(vb_vf_p2010_voted = ifelse(is.na(vb_vf_p2010), 0, 1),
   vb_vf_p2012_voted = ifelse(is.na(vb_vf_p2012), 0, 1),
@@ -131,9 +141,6 @@ unique_matched2 <- unique_matched %>%
   vb_vf_g2016_voted = ifelse(is.na(vb_vf_g2016), 0, 1),
   vb_vf_g2018_voted = ifelse(is.na(vb_vf_g2018), 0, 1))
   
-```
-
-```{r}
 elections <- unique_matched2 %>%
   select(contains("vb_vf_g20"), contains("vb_vf_p20")) %>%
   select(contains("voted")) %>%
@@ -142,40 +149,28 @@ elections <- unique_matched2 %>%
   summarize(voted = sum(voted)) %>%
   arrange(desc(voted))
 
-perc_voted_g2018 <- elections$voted[1]/nrow(unique_matched)
-perc_voted_g2018
-```
 
-
-```{r}
 ggplot(elections, aes(x = election, y = voted)) +
   geom_point() +
   theme(axis.text.x = element_text(angle = 90))
 ```
 
+This is not that insightful, basically tells us that the sample is mostly young people.
+
 # Demographic Breakdown
 
-```{r}
-unique_matched %>%
-  select(contains("gender"))
-
-#age variables:
-#vb_voterbase_age, vb_voterbase_age_bucket
-
-#race variable: race
-#4/8 try vb_voterbase_race
-
-#gender variable: gender
-
+```{r demo_eda}
 
 ggplot(data = unique_matched, aes(x = vb_voterbase_age_bucket, fill = gender)) +
   geom_bar(position = "dodge") +
   facet_wrap(~race)
 
+#count how many in each age bucket
 unique_matched %>%
   group_by(vb_voterbase_age_bucket) %>%
   tally()
 
+#breakdown of race by state
 unique_matched %>%
   filter(vb_tsmart_state %in% c("IA", "NH", "PA", "MA")) %>%
   group_by(vb_tsmart_state, race) %>%
@@ -192,6 +187,8 @@ nrow(filter(unique_matched, race == "Caucasian", gender == "Female", vb_voterbas
 ```
 
 ```{r}
+#graph only young people, facet by race
+#look at distribution with-in young people
 ggplot(data = 
          filter(pledge_to_vote, 
                 vb_voterbase_age_bucket == "18-29"), 
@@ -201,7 +198,7 @@ ggplot(data =
 ```
 
 ```{r}
-library(RColorBrewer)
+#only looking at white people
 ggplot(data = 
          filter(unique_matched, 
                 #vb_voterbase_age_bucket == "18-29",
@@ -216,18 +213,14 @@ ggplot(data =
 ```
 
 ```{r}
-unique_matched %>%
-  select(contains("state"), contains("city")) 
-
-#state variable: vb_tsmart_state: use this one, this is where they are living
-#vb_vf_source_state is the state abbreviation indicating the state where the voter file was acquired
-#city variable: vb_tsmart_city
-
+#count number in each state
 unique_matched %>%
   group_by(vb_tsmart_state) %>%
   tally() %>%
   arrange(desc(n))
 
+
+#graph of pledge to vote count by state 
 unique_matched %>%
   group_by(vb_tsmart_state) %>%
   tally() %>%
@@ -240,7 +233,7 @@ unique_matched %>%
        x = "State",
        y = "Count")
 
-
+#same graph as above except with source state instead of tsmart state
 unique_matched %>%
   group_by(vb_vf_source_state) %>%
   tally() %>%
@@ -256,10 +249,13 @@ unique_matched %>%
 
 Targeted states: Iowa, New Hampshire, Pennsylvania, Massachusetts
 
+Actually turns out Massachusetts wasn't targeted, only IA, NH, and PA
+
 ## Demographic breakdown by state
 
 
 ```{r base_plot_function}
+#create a function to plot the same faceted graphs for whatever conditions you filter on
 base_plot <- function(data, title, scales = "fixed"){ 
   data %>%
 ggplot(aes(x = vb_voterbase_age_bucket, fill = gender)) +
@@ -273,7 +269,9 @@ ggplot(aes(x = vb_voterbase_age_bucket, fill = gender)) +
 ```
 
 ```{r demographic_state}
+#all states
 base_plot(data = pledge_to_vote, title = "Pledge to Vote Individuals")
+
 #Iowa
 base_plot(data = filter(pledge_to_vote, vb_tsmart_state == "IA"), title = "Iowa")
 
@@ -288,6 +286,7 @@ base_plot(data = filter(pledge_to_vote, vb_tsmart_state == "MA"), title = "Massa
 ```
 
 ```{r}
+#similar graph to above but instead of faceting on race, facet on gender and leave out age because we pretty much know that age is all young people
 pledge_to_vote %>%
   ggplot(aes(x = vb_voterbase_race, fill = vb_voterbase_race)) +
   geom_bar() +
@@ -301,28 +300,11 @@ pledge_to_vote %>%
   facet_wrap(~gender)
 ```
 
-Notes on next steps from 4/8 mtg:
-
-hypothesis test between sample and population means - looking at if race was representative of the population
-try to connect this back to field work research - come up with some recommendations
-
-look for everyaction variables
-
-a lot of the field work was done at college campuses
-
-we could pull information about what campus they were recruited from in civis, it should be an activist code
-
-also pull in class & education
-
-try to look at zipcode level data
-
-
-what is hte problem you're working on
-visualizations
-what are our conclusions - what does this mean for organizing
 
 
 # Zipcode breakdown
+
+Note: this didn't pan out. We decided to instead look at college campus level instead of zipcode.
 
 ```{r}
 unique_matched %>%
@@ -350,39 +332,41 @@ unique_matched %>%
   arrange(desc(n))
 ```
 
+
+# In-state vs. Out-of-state 
+
+
 ```{r}
 #time to figure out what happened with massachusetts
-different_states <- pledge_to_vote %>%
-  filter(vb_vf_source_state != vb_tsmart_state) 
 
+#pull in college demographics again
 full_data_w_college_dems <- full_data %>%
   left_join(select(college_demographics, contains("activistcode"), state, college_type), by = "activistcodeid") %>%
   rename(college_state = state.y)
 
+#filter just by those who aren't registered in state
 not_registered_in_state <- full_data_w_college_dems %>%
   filter(vb_vf_source_state != college_state)
 
+#count those not registered in state by state
 not_registered_in_state %>%
   group_by(college_state) %>%
   tally() %>%
   arrange(desc(n))
 
-#new hampshire
+#new hampshire only
 not_registered_in_state %>%
   filter(college_state == "NH") %>%
   group_by(vb_vf_source_state) %>%
   tally() %>%
   arrange(desc(n))
 
+
+#calculate average out of state percentage for the colleges
 college_demographics %>%
   group_by(state) %>%
   summarize(avg_out_of_state = mean(out_of_state, na.rm = TRUE))
 
-college_demographics %>%
-  group_by(state) %>%
-  arrange(desc(state), desc(out_of_state)) %>%
-  select(activistcodename, out_of_state) %>%
-  View()
 ```
 
 
@@ -390,6 +374,7 @@ college_demographics %>%
 # Mapping 
 
 ```{r}
+#state abbreviations and names for join later
 state_abbreviations <- tibble::tribble(
           ~STATE_NAME, ~abbreviation,
           "Alabama",  "AL",
@@ -448,12 +433,7 @@ state_abbreviations <- tibble::tribble(
 
 
 ```{r}
-library(sf)
-library(tmap)
-library(leaflet)
-
-
-
+#read in us shapefile, join with state abbreviations so that we can join with pledge to vote counts for each state
 us_shapefile <- st_read(dsn = here("data/states_21basic")) %>%
   filter(!STATE_NAME %in% c("Alaska", "Hawaii", "District of Columbia")) %>%
   left_join(state_abbreviations, by = "STATE_NAME") %>%
@@ -461,6 +441,7 @@ us_shapefile <- st_read(dsn = here("data/states_21basic")) %>%
   mutate(n = ifelse(is.na(n),0, n)) %>%
   rename(`Pledge to Vote Count` = n)
 
+#plot it 
 us <- tm_shape(us_shapefile) +
   tm_polygons(col = "Pledge to Vote Count",
               palette = "YlGnBu",
@@ -470,6 +451,7 @@ us
 ```
 
 ```{r}
+#just highlight the states that were targeted 
 targeted_states <- us_shapefile %>%
   mutate(highlight = ifelse(abbreviation %in% c("IA", "NH", "PA"), 1, 0))
 
@@ -478,13 +460,6 @@ targeted_states_map <- tm_shape(targeted_states) +
               palette = "YlGnBu",
               legend.show = FALSE)
 targeted_states_map
-  
-  
-  us <- tm_shape(us_shapefile) +
-  tm_polygons(col = "Pledge to Vote Count",
-              palette = "YlGnBu",
-              breaks = c(0, 50, 100, 250, 500, 1000, Inf))
-us
 ```
 
 
